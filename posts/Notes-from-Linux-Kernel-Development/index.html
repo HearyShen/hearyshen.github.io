@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Reading Linux Kernel Development (Third Edition) by Robert Love. Some notes from this awesome book.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Notes from Linux Kernel Development">
+<meta property="og:url" content="https://heary.cn/posts/Notes-from-Linux-Kernel-Development/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="Reading Linux Kernel Development (Third Edition) by Robert Love. Some notes from this awesome book.">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-12-11T12:05:59.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.611Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Kernel">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/Notes-from-Linux-Kernel-Development/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/Notes-from-Linux-Kernel-Development/","path":"posts/Notes-from-Linux-Kernel-Development/","title":"Notes from Linux Kernel Development"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Notes from Linux Kernel Development | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#notes-from-linux-kernel-development"><span class="nav-text">Notes from Linux Kernel
+Development</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#introduction-to-the-linux-kernel"><span class="nav-text">1 Introduction to the Linux
+Kernel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#activities-of-linux-processes"><span class="nav-text">Activities of Linux
+Processes</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#monolithic-kernel-versus-microkernel-designs"><span class="nav-text">Monolithic Kernel
+Versus Microkernel Designs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#linux-versus-classic-unix-kernels"><span class="nav-text">Linux Versus Classic Unix
+Kernels</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#getting-started-with-the-kernel"><span class="nav-text">2 Getting Started with the
+Kernel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#the-kernel-source-tree"><span class="nav-text">The Kernel Source Tree</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#configuring-the-kernel"><span class="nav-text">Configuring the Kernel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#a-beast-of-a-different-nature"><span class="nav-text">A Beast of a Different
+Nature</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#process-management"><span class="nav-text">3 Process Management</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#the-process"><span class="nav-text">The Process</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#process-descriptor-and-the-task-structure"><span class="nav-text">Process Descriptor
+and the Task Structure</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#allocating-the-process-descriptor"><span class="nav-text">Allocating the Process
+Descriptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#storing-the-process-descriptor"><span class="nav-text">Storing the Process
+Descriptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#process-state"><span class="nav-text">Process State</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#manipulating-the-current-process-state"><span class="nav-text">Manipulating the Current
+Process State</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#the-process-family-tree"><span class="nav-text">The Process Family Tree</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#process-creation"><span class="nav-text">Process Creation</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#copy-on-write"><span class="nav-text">Copy-on-Write</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#forking"><span class="nav-text">Forking</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vfork"><span class="nav-text">vfork()</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/Notes-from-Linux-Kernel-Development/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Notes from Linux Kernel Development | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Notes from Linux Kernel Development
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-12-11 20:05:59" itemprop="dateCreated datePublished" datetime="2019-12-11T20:05:59+08:00">2019-12-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>Reading <strong><em>Linux Kernel Development (Third
+Edition)</em></strong> by Robert Love. Some notes from this awesome
+book.</p>
+<span id="more"></span>
+<h1 id="notes-from-linux-kernel-development">Notes from Linux Kernel
+Development</h1>
+<h2 id="introduction-to-the-linux-kernel">1 Introduction to the Linux
+Kernel</h2>
+<h3 id="activities-of-linux-processes">Activities of Linux
+Processes</h3>
+<p>These contexts represent the breadth of the kernel’s activities. In
+fact, in Linux, we can generalize that each processor is doing exactly
+one of three things at any given moment:</p>
+<ul>
+<li>In user-space, executing user code in a process</li>
+<li>In kernel-space, in process context, executing on behalf of a
+specific process</li>
+<li>In kernel-space, in interrupt context, not associated with a
+process, handling an interrupt</li>
+</ul>
+<p>This list is inclusive. Even corner cases fit into one of these three
+activities: For example, when idle, it turns out that the kernel is
+executing an <em>idle process</em> in process context in the kernel.</p>
+<h3 id="monolithic-kernel-versus-microkernel-designs">Monolithic Kernel
+Versus Microkernel Designs</h3>
+<p>Linux is a monolithic kernel; that is, the Linux kernel executes in a
+single address space entirely in kernel mode. Linux, however, borrows
+much of the good from microkernels: Linux boasts a modular design, the
+capability to preempt itself (called <em>kernel preemption</em>),
+support for kernel threads, and the capability to dynamically load
+separate binaries (kernel modules) into the kernel image. Conversely,
+Linux has none of the performance-sapping features that curse
+microkernel design: Everything runs in kernel mode, with direct function
+invocation not message passing—the modus of communication. Nonetheless,
+Linux is modular, threaded, and the kernel itself is schedulable.
+Pragmatism wins again.</p>
+<h3 id="linux-versus-classic-unix-kernels">Linux Versus Classic Unix
+Kernels</h3>
+<p>As Linus and other kernel developers contribute to the Linux kernel,
+they decide how best to advance Linux without neglecting its Unix roots
+(and, more important, the Unix API). Consequently, because Linux is not
+based on any specific Unix variant, Linus and company can pick and
+choose the best solution to any given problem—or at times, invent new
+solutions! A handful of notable differences exist between the Linux
+kernel and classic Unix systems:</p>
+<ul>
+<li><p>Linux supports the <strong>dynamic loading of kernel
+modules</strong>. Although the Linux kernel is monolithic, it can
+dynamically load and unload kernel code on demand.</p></li>
+<li><p>Linux has <strong>symmetrical multiprocessor (SMP)
+support</strong>. Although most commercial variants of Unix now support
+SMP, most traditional Unix implementations did not.</p></li>
+<li><p>The Linux kernel is <strong>preemptive</strong>. Unlike
+traditional Unix variants, the Linux kernel can preempt a task even as
+it executes in the kernel. Of the other commercial Unix implementations,
+Solaris and IRIX have preemptive kernels, but most Unix kernels are not
+preemptive.</p></li>
+<li><p>Linux takes an interesting approach to thread support: It
+<strong>does not differentiate between threads and normal
+processes</strong>. To the kernel, all processes are the same— some just
+happen to share resources.</p></li>
+<li><p>Linux provides an <strong>object-oriented device model</strong>
+with device classes, hot-pluggable events, and a user-space device
+filesystem (<code>sysfs</code>).</p></li>
+<li><p>Linux ignores some common Unix features that the kernel
+developers consider poorly designed, such as STREAMS, or standards that
+are impossible to cleanly implement.</p></li>
+<li><p>Linux is <strong>free in every sense of the word</strong>. The
+feature set Linux implements is the result of the freedom of Linux’s
+open development model. If a feature is without merit or poorly thought
+out, Linux developers are under no obligation to implement it. To the
+contrary, Linux has adopted an elitist attitude toward changes:
+Modifications must solve a specific real-world problem, derive from a
+clean design, and have a solid implementation. Consequently, features of
+some other modern Unix variants that are more marketing bullet or
+one-off requests, such as pageable kernel memory, have received no
+consideration.</p></li>
+</ul>
+<p>Despite these differences, however, Linux remains an operating system
+with a strong Unix heritage.</p>
+<h2 id="getting-started-with-the-kernel">2 Getting Started with the
+Kernel</h2>
+<h3 id="the-kernel-source-tree">The Kernel Source Tree</h3>
+<p>Directories in the Root of the Kernel Source Tree</p>
+<table>
+<thead>
+<tr class="header">
+<th>Directory</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>arch</td>
+<td>Architecture-specific source</td>
+</tr>
+<tr class="even">
+<td>block</td>
+<td>Block I/O layer</td>
+</tr>
+<tr class="odd">
+<td>crypto</td>
+<td>Crypto API</td>
+</tr>
+<tr class="even">
+<td>Documentation</td>
+<td>Kernel source documentation</td>
+</tr>
+<tr class="odd">
+<td>drivers</td>
+<td>Device drivers</td>
+</tr>
+<tr class="even">
+<td>firmware</td>
+<td>Device firmware needed to use certain drivers</td>
+</tr>
+<tr class="odd">
+<td>fs</td>
+<td>The VFS and the individual filesystems</td>
+</tr>
+<tr class="even">
+<td>include</td>
+<td>Kernel headers</td>
+</tr>
+<tr class="odd">
+<td>init</td>
+<td>Kernel boot and initialization</td>
+</tr>
+<tr class="even">
+<td>ipc</td>
+<td>Interprocess communication code</td>
+</tr>
+<tr class="odd">
+<td>kernel</td>
+<td>Core subsystems, such as the scheduler</td>
+</tr>
+<tr class="even">
+<td>lib</td>
+<td>Helper routines</td>
+</tr>
+<tr class="odd">
+<td>mm</td>
+<td>Memory management subsystem and the VM</td>
+</tr>
+<tr class="even">
+<td>net</td>
+<td>Networking subsystem</td>
+</tr>
+<tr class="odd">
+<td>samples</td>
+<td>Sample, demonstrative code</td>
+</tr>
+<tr class="even">
+<td>scripts</td>
+<td>Scripts used to build the kernel</td>
+</tr>
+<tr class="odd">
+<td>security</td>
+<td>Linux Security Module</td>
+</tr>
+<tr class="even">
+<td>sound</td>
+<td>Sound subsystem</td>
+</tr>
+<tr class="odd">
+<td>usr</td>
+<td>Early user-space code (called initramfs)</td>
+</tr>
+<tr class="even">
+<td>tools</td>
+<td>Tools helpful for developing Linux</td>
+</tr>
+<tr class="odd">
+<td>virt</td>
+<td>Virtualization infrastructure</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuring-the-kernel">Configuring the Kernel</h3>
+<p>text-based command-line utility:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ make config</span><br></pre></td></tr></table></figure>
+<p>ncurses-based graphical utility:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ make menuconfig</span><br></pre></td></tr></table></figure>
+<p>gtk+-based graphical utility: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ make gconfig</span><br></pre></td></tr></table></figure></p>
+<h3 id="a-beast-of-a-different-nature">A Beast of a Different
+Nature</h3>
+<p>These characteristics make the kernel a beast of a different nature.
+Some of the usual rules are bent; other rules are entirely new. Although
+some of the differences are obvious (we all know the kernel can do
+anything it wants), others are not so obvious. The most important of
+these differences are</p>
+<ul>
+<li>The kernel has access to <strong>neither the C library nor the
+standard C headers</strong>.</li>
+<li>The kernel is coded in <strong>GNU C</strong>.</li>
+<li>The kernel <strong>lacks the memory protection</strong> afforded to
+user-space.</li>
+<li>The kernel <strong>cannot easily execute floating-point
+operations</strong>.</li>
+<li>The kernel has a <strong>small per-process fixed-size
+stack</strong>.</li>
+<li>Because the kernel has <strong>asynchronous interrupts</strong>, is
+<strong>preemptive</strong>, and supports <strong>SMP</strong>,
+<strong>synchronization and concurrency</strong> are major concerns
+within the kernel.</li>
+<li><strong>Portability</strong> is important.</li>
+</ul>
+<h2 id="process-management">3 Process Management</h2>
+<h3 id="the-process">The Process</h3>
+<p><strong>A <em>process</em> is a program (object code stored on some
+media) in the midst of execution.</strong> Processes are, however, more
+than just the executing program code (often called the <em>text
+section</em> in Unix).They also include a set of resources such as open
+files and pending signals, internal kernel data, processor state, a
+memory address space with one or more memory mappings, one or more
+<em>threads of execution</em>, and a <em>data section</em> containing
+global variables. Processes, in effect, are the living result of running
+program code. The kernel needs to manage all these details efficiently
+and transparently.</p>
+<p><strong>Threads of execution, often shortened to <em>threads</em>,
+are the objects of activity within the process.</strong> Each thread
+includes a unique program counter, process stack, and set of processor
+registers. <strong>The kernel schedules individual threads, not
+processes.</strong> In traditional Unix systems, each process consists
+of one thread. In modern systems, however, multithreaded programs—those
+that consist of more than one thread—are common. As you will see later,
+Linux has a unique implementation of threads: It does not differentiate
+between threads and processes. <strong>To Linux, a thread is just a
+special kind of process.</strong></p>
+<p>Another name for a process is a <em>task</em>. <strong>The Linux
+kernel internally refers to processes as</strong>
+<strong>tasks.</strong></p>
+<h3 id="process-descriptor-and-the-task-structure">Process Descriptor
+and the Task Structure</h3>
+<p><strong>The kernel stores the list of processes in a circular doubly
+linked list called the task list.</strong> Each element in the task list
+is a <em>process descriptor</em> of the type
+<code>struct task_struct</code>, which is defined
+in<code>&lt;linux/sched.h&gt;</code>.The process descriptor contains all
+the information about a specific process.</p>
+<p>The <code>task_struct</code> is a relatively large data structure, at
+around 1.7 kilobytes on a 32-bit machine. This size, however, is quite
+small considering that the structure <strong>contains all the
+information that the kernel has and needs about a process.</strong> The
+process descriptor contains the data that describes the executing
+program open files, the process’s address space, pending signals, the
+process’s state, and much more (see Figure 3.1).</p>
+<h4 id="allocating-the-process-descriptor">Allocating the Process
+Descriptor</h4>
+<p>The <code>task_struct</code> structure is allocated via the <em>slab
+allocator</em> to provide object reuse and cache coloring (see Chapter
+12). Prior to the 2.6 kernel series, <code>struct task_struct</code> was
+stored at the end of the kernel stack of each process. This allowed
+architectures with few registers, such as x86, to calculate the location
+of the process descriptor via the stack pointer without using an extra
+register to store the location. With the process descriptor now
+dynamically created via the slab allocator, a new structure,
+<code>struct thread_info</code>, was created that again lives at the
+bottom of the stack (for stacks that grow down) and at the top of the
+stack (for stacks that grow up). See Figure 3.2.</p>
+<p>The <code>thread_info</code> structure is defined on x86 in
+<code>&lt;asm/thread_info.h&gt;</code> as</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">thread_info</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> 	*<span class="title">task</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">exec_domain</span> 	*<span class="title">exec_domain</span>;</span></span><br><span class="line">    __u32 				flags;</span><br><span class="line">    __u32 				status;</span><br><span class="line">    __u32 				cpu;</span><br><span class="line">    <span class="type">int</span> 				preempt_count;</span><br><span class="line">    <span class="type">mm_segment_t</span> 		addr_limit;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">restart_block</span> <span class="title">restart_block</span>;</span></span><br><span class="line">    <span class="type">void</span> 				*sysenter_return;</span><br><span class="line">    <span class="type">int</span> 				uaccess_err;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Each task’s <code>thread_info</code> structure is allocated at the
+end of its stack. The task element of the structure is a pointer to the
+task’s actual <code>task_struct</code>.</p>
+<h4 id="storing-the-process-descriptor">Storing the Process
+Descriptor</h4>
+<p>The system identifies processes by a <em>unique process
+identification</em> value or <em>PID</em>. The PID is a numerical value
+represented by the opaque type <code>pid_t</code>, which is typically an
+<code>int</code>. Because of backward compatibility with earlier Unix
+and Linux versions, however, the default maximum value is only 32,768
+(that of a <code>short int</code>, although the value optionally can be
+increased as high as four million (this is controlled in
+<code>&lt;linux/threads.h&gt;</code>.The kernel stores this value as
+<code>pid</code> inside each process descriptor. If the system is
+willing to break compatibility with old applications, the administrator
+may increase the maximum value via
+<code>/proc/sys/kernel/pid_max</code>.</p>
+<p>current dereferences the task member of <code>thread_info</code> to
+return the <code>task_struct</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">current_thread_info()-&gt;task;</span><br></pre></td></tr></table></figure>
+<h4 id="process-state">Process State</h4>
+<ul>
+<li><code>TASK_RUNNING</code>
+<ul>
+<li>The process is runnable; it is either currently running or on a
+runqueue waiting to run.</li>
+</ul></li>
+<li><code>ASK_INTERRUPTIBLE</code>
+<ul>
+<li>The process is sleeping (that is, it is blocked), waiting for some
+condition to exist. When this condition exists, the kernel sets the
+process’s state to <code>TASK_RUNNING</code>.</li>
+</ul></li>
+<li><code>TASK_UNINTERRUPTIBLE</code>
+<ul>
+<li>This state is identical to <code>TASK_INTERRUPTIBLE</code> except
+that it does not wake up and become runnable if it receives a
+signal.</li>
+</ul></li>
+<li><code>__TASK_TRACED</code>
+<ul>
+<li>The process is being <em>traced by</em> another process, such as a
+debugger, via <em>ptrace</em>.</li>
+</ul></li>
+<li><code>__TASK_STOPPED</code>
+<ul>
+<li>Process execution has stopped; the task is not running nor is it
+eligible to run. This occurs if the task receives the
+<code>SIGSTOP</code>, <code>SIGTSTP</code>, <code>SIGTTIN</code>, or
+<code>SIGTTOU</code> signal or if it receives <em>any</em> signal while
+it is being debugged.</li>
+</ul></li>
+</ul>
+<h4 id="manipulating-the-current-process-state">Manipulating the Current
+Process State</h4>
+<p>Kernel code often needs to change a process’s state. he preferred
+mechanism is using</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set_task_state(task, state); <span class="comment">/* set task ‘task’ to state ‘state’ */</span></span><br></pre></td></tr></table></figure>
+<p>The method <code>set_current_state(state)</code> is synonymous to
+<code>set_task_state(current, state)</code>. See
+<code>&lt;linux/sched.h&gt;</code> for the implementation of these and
+related functions.</p>
+<h4 id="the-process-family-tree">The Process Family Tree</h4>
+<p>All processes are descendants of the <code>init</code> process, whose
+PID is one. The kernel starts <code>init</code> in the last step of the
+boot process. The <code>init</code> process, in turn, reads the system
+<em>initscripts</em> and executes more programs, eventually completing
+the boot process.</p>
+<h3 id="process-creation">Process Creation</h3>
+<p>Most operating systems implement a <em>spawn</em> mechanism to create
+a new process in a new address space, read in an executable, and begin
+executing it. Unix takes the unusual approach of separating these steps
+into two distinct functions: <code>fork()</code>and
+<code>exec()</code>.</p>
+<p>The first, <code>fork()</code>, creates a child process that is a
+copy of the current task. It differs from the parent only in its PID
+(which is unique)</p>
+<p>The second function, <code>exec()</code>, loads a new executable into
+the address space and begins executing it.</p>
+<h4 id="copy-on-write">Copy-on-Write</h4>
+<p>In Linux, <code>fork()</code> is implemented through the use of
+<em>copy-on-write</em> pages.</p>
+<h4 id="forking">Forking</h4>
+<p>Linux implements<code>fork()</code> via the <code>clone()</code>
+system call.</p>
+<p>This call takes a series of flags that specify which resources, if
+any, the parent and child process should share. (See “The Linux
+Implementation of Threads” section later in this chapter for more about
+the flags.) The <code>fork()</code>, <code>vfork()</code>, and
+<code>__clone()</code> library calls all invoke the <code>clone()</code>
+system call with the requisite flags. The clone() system call, in turn,
+calls <code>do_fork()</code>.</p>
+<h4 id="vfork">vfork()</h4>
+<p>The <code>vfork()</code> system call has the same effect as
+<code>fork()</code>, except that the page table entries of the parent
+process are not copied. Instead, the child executes as the sole thread
+in the parent’s address space, and the parent is blocked until the child
+either calls <code>exec()</code> or exits. The child is <em>not</em>
+allowed to write to the address space.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/Notes-from-Linux-Kernel-Development/" title="Notes from Linux Kernel Development">https://heary.cn/posts/Notes-from-Linux-Kernel-Development/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+              <a href="/tags/Kernel/" rel="tag"><i class="fa fa-tag"></i> Kernel</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E5%AE%9E%E7%8E%B0QQ%E8%87%AA%E5%8A%A8%E5%AF%B9%E8%AF%9D%E6%9C%BA%E5%99%A8%E4%BA%BA/" rel="prev" title="实现QQ自动对话机器人">
+                  <i class="fa fa-chevron-left"></i> 实现QQ自动对话机器人
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/Rocket-Chat-%E5%9F%BA%E4%BA%8ECentOS8%E9%83%A8%E7%BD%B2%E7%A7%81%E6%9C%89%E5%8D%B3%E6%97%B6%E9%80%9A%E4%BF%A1%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="next" title="Rocket.Chat - 基于CentOS8部署私有即时通信服务器">
+                  Rocket.Chat - 基于CentOS8部署私有即时通信服务器 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"7195ae2858ec9024a287796acc634c40"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

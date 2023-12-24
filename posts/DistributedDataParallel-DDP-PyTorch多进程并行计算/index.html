@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="PyTorch的DistributedDataParallel(DDP)可以实现多进程的并行计算，相较于传统的单进程多线程的DataParallel，DDP支持多节点的分布式计算。即使在单机多卡的场景下，DDP通常性能也更好，因为它不仅规避了Python多线程的全局解释器锁争用（GIL contention）造成的性能开销，而且还不需要在多GPU训练中频繁复制同步模型、分发输入数据和收集模型输出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DistributedDataParallel(DDP) - PyTorch多进程并行计算">
+<meta property="og:url" content="https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="PyTorch的DistributedDataParallel(DDP)可以实现多进程的并行计算，相较于传统的单进程多线程的DataParallel，DDP支持多节点的分布式计算。即使在单机多卡的场景下，DDP通常性能也更好，因为它不仅规避了Python多线程的全局解释器锁争用（GIL contention）造成的性能开销，而且还不需要在多GPU训练中频繁复制同步模型、分发输入数据和收集模型输出">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-12-17T11:59:51.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.587Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="PyTorch">
+<meta property="article:tag" content="Parallel Computing">
+<meta property="article:tag" content="Multiprocessing">
+<meta property="article:tag" content="CUDA">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/","path":"posts/DistributedDataParallel-DDP-PyTorch多进程并行计算/","title":"DistributedDataParallel(DDP) - PyTorch多进程并行计算"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DistributedDataParallel(DDP) - PyTorch多进程并行计算 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#distributeddataparallelddp---pytorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97"><span class="nav-text">DistributedDataParallel(DDP)
+- PyTorch多进程并行计算</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#python-gil"><span class="nav-text">Python GIL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#distributeddataparallel%E8%BE%83dataparallel%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-text">DistributedDataParallel较DataParallel的优势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-text">原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-text">使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#spawn%E5%88%9B%E5%BB%BA%E5%A4%9A%E8%BF%9B%E7%A8%8B"><span class="nav-text">spawn创建多进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#worker%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C"><span class="nav-text">worker多进程并行</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#init_process_group"><span class="nav-text">init_process_group</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#distributeddataparallel"><span class="nav-text">DistributedDataParallel</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#distributedsampler"><span class="nav-text">DistributedSampler</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="DistributedDataParallel(DDP) - PyTorch多进程并行计算 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DistributedDataParallel(DDP) - PyTorch多进程并行计算
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-12-17 19:59:51" itemprop="dateCreated datePublished" datetime="2020-12-17T19:59:51+08:00">2020-12-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>9 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>PyTorch的DistributedDataParallel(DDP)可以实现多进程的并行计算，相较于传统的单进程多线程的DataParallel，DDP支持多节点的分布式计算。即使在单机多卡的场景下，DDP通常性能也更好，因为它不仅规避了Python多线程的全局解释器锁争用（GIL
+contention）造成的性能开销，而且还不需要在多GPU训练中频繁复制同步模型、分发输入数据和收集模型输出。</p>
+<span id="more"></span>
+<h1
+id="distributeddataparallelddp---pytorch多进程并行计算">DistributedDataParallel(DDP)
+- PyTorch多进程并行计算</h1>
+<h2 id="背景">背景</h2>
+<h3 id="python-gil">Python GIL</h3>
+<p>GIL（Global Interpreter
+Lock）指的是全局解释器锁，由CPython解释器引入。因为CPython解释器的内存管理是线程不安全的，所以为了避免多线程同时执行Python字节码造成线程安全问题，就加了这么一个全局的互斥锁。可也正是因为这个全局互斥锁，导致Python的多线程实际上同时只有一个线程在运行，显然无法充分利用多处理器的性能。</p>
+<p>参考官方解释：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://python.land/python-concurrency/the-python-gil">The
+Python GIL</a></p>
+<p>Python has one peculiarity that makes concurrent programming harder.
+It’s called the <strong>GIL</strong>, short for Global Interpreter Lock.
+The GIL makes sure there is, at any time, only one thread running.
+Because only one thread can run at a time, it’s impossible to use
+multiple processors with threads. But don’t worry, there’s a way around
+this.</p>
+<p>The GIL was invented because CPython’s memory management is not
+thread-safe. With only one thread running at a time, CPython can rest
+assured there will never be race conditions.</p>
+</blockquote>
+<h3
+id="distributeddataparallel较dataparallel的优势">DistributedDataParallel较DataParallel的优势</h3>
+<p>DistributedDataParallel(DDP)相较于DataParallel(DP)有诸多优势，包括功能上的优势和性能上的优势：</p>
+<p>功能上：</p>
+<ol type="1">
+<li>DDP的原理是多进程，因此DDP支持多机多卡的分布式计算，而DP是但经常多线程，因此最高只支持单机多卡；</li>
+<li>DDP支持模型并行（model
+parallel），可以把一个模型拆成几个阶段来跑，而DP还不支持。</li>
+</ol>
+<p>性能上：</p>
+<ol type="1">
+<li>正是因为DDP基于多进程（通常推荐1个GPU匹配一个工作进程），所以不像DP那样基于单进程多线程的并行性能受到GIL争用开销的阻碍。</li>
+<li>在单机多卡的情况下，DP需要在训练中频繁在多卡之间复制模型以完成同步，需要分发（scatter）输入和收集（gather）输出，而DDP采用的All-Reduce算法采取聚合通信（collective
+communication）的方式收集梯度，其性能更好。</li>
+</ol>
+<p>总的来讲，功能上的优势其实也是为了更好利用设备性能。</p>
+<h2 id="原理">原理</h2>
+<p>原理可参阅：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://pytorch.org/docs/master/notes/ddp.html">Distributed
+Data Parallel - PyTorch master Documentation</a></p>
+</blockquote>
+<p>另有一篇2020年的论文：</p>
+<blockquote>
+<p>Li S, Zhao Y, Varma R, et al. PyTorch distributed: experiences on
+accelerating data parallel training[J]. Proceedings of the VLDB
+Endowment, 2020, 13(12): 3005-3018.</p>
+<p><a target="_blank" rel="noopener" href="http://www.vldb.org/pvldb/vol13/p3005-li.pdf">PDF on
+vldb.org</a></p>
+</blockquote>
+<p>总的架构可以参考：</p>
+<ul>
+<li>Distributed System
+<ul>
+<li>Node 0
+<ul>
+<li>Process0 [Global Rank=0, Local Rank=0] -&gt; GPU 0-0</li>
+<li>Process1 [Global Rank=1, Local Rank=1] -&gt; GPU 0-1</li>
+<li>Process2 [Global Rank=2, Local Rank=2] -&gt; GPU 0-2</li>
+<li>Process3 [Global Rank=3, Local Rank=3] -&gt; GPU 0-3</li>
+</ul></li>
+<li>Node 1
+<ul>
+<li>Process4 [Global Rank=4, Local Rank=0] -&gt; GPU 1-0</li>
+<li>Process5 [Global Rank=5, Local Rank=1] -&gt; GPU 1-1</li>
+<li>Process6 [Global Rank=6, Local Rank=2] -&gt; GPU 1-2</li>
+<li>Process7 [Global Rank=7, Local Rank=3] -&gt; GPU 1-3</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>在这样的架构中，有如下术语和数值：</p>
+<ul>
+<li>N=2 <strong>Nodes</strong></li>
+<li>G=4 <strong>GPUs per node</strong></li>
+<li>W=8 Application processes across all nodes (aka. <strong>World
+Size</strong>)</li>
+<li>L=4 Application processes on each nodes (aka. <strong>Local
+Size</strong>)</li>
+</ul>
+<h2 id="使用">使用</h2>
+<p>相较于DataParallel只需要简单地套到原模型上，DistributedDataParallel因为其原理是基于多进程的，因此写起来会稍微显得复杂一点点。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">Distributed Data Parallel (DDP) example</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Author: HearyShen</span></span><br><span class="line"><span class="string">Date:   2020.12.17</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">from</span> argparse <span class="keyword">import</span> ArgumentParser</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.utils.data <span class="keyword">as</span> data</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.cuda <span class="keyword">as</span> cuda</span><br><span class="line"><span class="keyword">import</span> torch.distributed <span class="keyword">as</span> dist</span><br><span class="line"><span class="keyword">import</span> torch.multiprocessing <span class="keyword">as</span> mp</span><br><span class="line"><span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim</span><br><span class="line"><span class="keyword">import</span> torchvision.models <span class="keyword">as</span> models</span><br><span class="line"></span><br><span class="line">DIST_DEFAULT_BACKEND = <span class="string">&#x27;nccl&#x27;</span></span><br><span class="line">DIST_DEFAULT_ADDR = <span class="string">&#x27;localhost&#x27;</span></span><br><span class="line">DIST_DEFAULT_PORT = <span class="string">&#x27;12344&#x27;</span></span><br><span class="line">DIST_DEFAULT_INIT_METHOD = <span class="string">f&#x27;tcp://<span class="subst">&#123;DIST_DEFAULT_ADDR&#125;</span>:<span class="subst">&#123;DIST_DEFAULT_PORT&#125;</span>&#x27;</span></span><br><span class="line">DIST_DEFAULT_WORLD_SIZE = cuda.device_count()</span><br><span class="line"></span><br><span class="line">DEFAULT_BATCH_SIZE = <span class="number">64</span></span><br><span class="line">DEFAULT_NUM_WORKERS_PER_GPU = <span class="number">8</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TinyNet</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        self.mlp = nn.Linear(<span class="number">3</span>, <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        out = self.mlp(x)</span><br><span class="line">        <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TinyDataset</span>(data.dataset.Dataset):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__getitem__</span>(<span class="params">self, index</span>):</span><br><span class="line">        x = torch.rand([<span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>])</span><br><span class="line">        y = random.randint(<span class="number">0</span>, <span class="number">999</span>)</span><br><span class="line">        <span class="keyword">return</span> x, y</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__len__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="number">10000</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">worker</span>(<span class="params">rank, args</span>):</span><br><span class="line">    model = models.resnet50(pretrained=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">if</span> args.distributed:</span><br><span class="line">        <span class="built_in">print</span>(</span><br><span class="line">            <span class="string">f&quot;[<span class="subst">&#123;os.getpid()&#125;</span>] Initializing <span class="subst">&#123;rank&#125;</span>/<span class="subst">&#123;DIST_DEFAULT_WORLD_SIZE&#125;</span> at <span class="subst">&#123;DIST_DEFAULT_INIT_METHOD&#125;</span>&quot;</span></span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        <span class="comment"># initialize with TCP in this example</span></span><br><span class="line">        dist.init_process_group(backend=DIST_DEFAULT_BACKEND,</span><br><span class="line">                                init_method=DIST_DEFAULT_INIT_METHOD,</span><br><span class="line">                                world_size=DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">                                rank=rank)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># # Another way to initialize with environment variables</span></span><br><span class="line">        <span class="comment"># os.environ[&quot;MASTER_PORT&quot;] = DIST_DEFAULT_PORT</span></span><br><span class="line">        <span class="comment"># os.environ[&quot;MASTER_ADDR&quot;] = DIST_DEFAULT_ADDR</span></span><br><span class="line">        <span class="comment"># os.environ[&quot;WORLD_SIZE&quot;] = str(DIST_DEFAULT_WORLD_SIZE)</span></span><br><span class="line">        <span class="comment"># os.environ[&quot;RANK&quot;] = str(rank)</span></span><br><span class="line">        <span class="comment"># dist.init_process_group(backend=DIST_DEFAULT_BACKEND)</span></span><br><span class="line"></span><br><span class="line">        <span class="built_in">print</span>(</span><br><span class="line">            <span class="string">f&quot;[<span class="subst">&#123;os.getpid()&#125;</span>] Computing <span class="subst">&#123;rank&#125;</span>/<span class="subst">&#123;DIST_DEFAULT_WORLD_SIZE&#125;</span> at <span class="subst">&#123;DIST_DEFAULT_INIT_METHOD&#125;</span>&quot;</span></span><br><span class="line">        )</span><br><span class="line">        <span class="comment"># ensuring that each process exclusively works on a single GPU</span></span><br><span class="line">        torch.cuda.set_device(rank)</span><br><span class="line">        model.cuda(rank)</span><br><span class="line">        <span class="comment"># When using a single GPU per process and per</span></span><br><span class="line">        <span class="comment"># DistributedDataParallel, we need to divide the batch size</span></span><br><span class="line">        <span class="comment"># ourselves based on the total number of GPUs we have</span></span><br><span class="line">        model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        model = nn.DataParallel(model).cuda()</span><br><span class="line"></span><br><span class="line">    loss_func = nn.CrossEntropyLoss()</span><br><span class="line">    optimizer = optim.SGD(model.parameters(), lr=<span class="number">0.001</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># dataset</span></span><br><span class="line">    dataset = TinyDataset()</span><br><span class="line">    dist_sampler = data.distributed.DistributedSampler(</span><br><span class="line">        dataset) <span class="keyword">if</span> args.distributed <span class="keyword">else</span> <span class="literal">None</span></span><br><span class="line">    dataloader = data.dataloader.DataLoader(</span><br><span class="line">        dataset,</span><br><span class="line">        batch_size=DEFAULT_BATCH_SIZE // DIST_DEFAULT_WORLD_SIZE <span class="keyword">if</span> args.distributed <span class="keyword">else</span> DEFAULT_BATCH_SIZE,</span><br><span class="line">        shuffle=(dist_sampler <span class="keyword">is</span> <span class="literal">None</span>),</span><br><span class="line">        num_workers=DEFAULT_NUM_WORKERS_PER_GPU <span class="keyword">if</span> args.distributed <span class="keyword">else</span> DEFAULT_NUM_WORKERS_PER_GPU * DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">        sampler=dist_sampler)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># train</span></span><br><span class="line">    model = model.train()</span><br><span class="line">    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">2</span>):</span><br><span class="line">        <span class="keyword">if</span> args.distributed:</span><br><span class="line">            dist_sampler.set_epoch(epoch)</span><br><span class="line">        <span class="keyword">for</span> i, (x, label) <span class="keyword">in</span> <span class="built_in">enumerate</span>(dataloader):</span><br><span class="line">            y = model(x)</span><br><span class="line">            loss = loss_func(y, label.to(y.device))</span><br><span class="line"></span><br><span class="line">            optimizer.zero_grad()</span><br><span class="line">            loss.backward()</span><br><span class="line">            optimizer.step()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> args.distributed:</span><br><span class="line">            <span class="built_in">print</span>(</span><br><span class="line">                <span class="string">f&quot;[<span class="subst">&#123;os.getpid()&#125;</span>] Epoch-<span class="subst">&#123;epoch&#125;</span> ended <span class="subst">&#123;rank&#125;</span>/<span class="subst">&#123;DIST_DEFAULT_WORLD_SIZE&#125;</span> at <span class="subst">&#123;DIST_DEFAULT_INIT_METHOD&#125;</span> on <span class="subst">&#123;y.device&#125;</span>&quot;</span></span><br><span class="line">            )</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;[<span class="subst">&#123;os.getpid()&#125;</span>] Epoch-<span class="subst">&#123;epoch&#125;</span> ended on <span class="subst">&#123;y.device&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> args.distributed:</span><br><span class="line">        <span class="built_in">print</span>(</span><br><span class="line">            <span class="string">f&quot;[<span class="subst">&#123;os.getpid()&#125;</span>] Finishing <span class="subst">&#123;rank&#125;</span>/<span class="subst">&#123;DIST_DEFAULT_WORLD_SIZE&#125;</span> at <span class="subst">&#123;DIST_DEFAULT_INIT_METHOD&#125;</span> on <span class="subst">&#123;y.device&#125;</span>&quot;</span></span><br><span class="line">        )</span><br><span class="line">        dist.destroy_process_group()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">launch</span>(<span class="params">args</span>):</span><br><span class="line">    tic = time.time()</span><br><span class="line">    <span class="keyword">if</span> args.distributed:</span><br><span class="line">        mp.spawn(worker,</span><br><span class="line">                 args=(args, ),</span><br><span class="line">                 nprocs=DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">                 join=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        worker(<span class="literal">None</span>, args)</span><br><span class="line">    toc = time.time()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Finished in <span class="subst">&#123;toc-tic:<span class="number">.2</span>f&#125;</span>s&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    parser = ArgumentParser()</span><br><span class="line">    parser.add_argument(<span class="string">&quot;-d&quot;</span>, <span class="string">&quot;--distributed&quot;</span>, action=<span class="string">&quot;store_true&quot;</span>)</span><br><span class="line">    args = parser.parse_args()</span><br><span class="line"></span><br><span class="line">    launch(args)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="spawn创建多进程">spawn创建多进程</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">launch</span>(<span class="params">args</span>):</span><br><span class="line">    tic = time.time()</span><br><span class="line">    <span class="keyword">if</span> args.distributed:</span><br><span class="line">        mp.spawn(worker,</span><br><span class="line">                 args=(args, ),</span><br><span class="line">                 nprocs=DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">                 join=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        worker(<span class="literal">None</span>, args)</span><br><span class="line">    toc = time.time()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Finished in <span class="subst">&#123;toc-tic:<span class="number">.2</span>f&#125;</span>s&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>launch</code>使用<code>multiprocessing.spawn</code>来快速创建<code>nprocs</code>个新进程，每个进程都执行<code>worker</code>函数，并传入<code>args</code>作为函数参数。</p>
+<p>需要注意的是，<code>spawn</code>默认会为函数传入一个<code>i</code>，且<code>i</code>在<code>[0, nprocs)</code>之间。即，<code>worker</code>函数收到的参数列表是<code>(i, args, )</code>。</p>
+<h3 id="worker多进程并行">worker多进程并行</h3>
+<p>每一个worker进程做的工作分以下几个阶段：</p>
+<ol type="1">
+<li>初始化进程组：并行启动的多进程相互之间得形成一个进程组，即，要知道在哪会合（rendezvous）。DDP的机制会把以rank=0进程上的模型为准，自动保证其他进程上的模型与之保持一致性。</li>
+<li>DDP包装模型：创建模型，用DistributedDataParallel包装，移动到该进程对应的GPU设备上。</li>
+<li>准备数据：为DDP建立<code>DistributedSampler</code>，以便DataLoader将数据加载给每个GPU上训练的模型。</li>
+<li>进行训练：每个进程根据DataLoader分担的batch_size来并行处理训练数据。</li>
+<li>销毁进程组：进程执行完成后，销毁启动的进程组。</li>
+</ol>
+<h4 id="init_process_group">init_process_group</h4>
+<blockquote>
+<p>参阅torch.distributed的官方文档：</p>
+<p><a
+target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/distributed.html#torch.distributed.init_process_group">Distributed
+communication package - torch.distributed</a></p>
+</blockquote>
+<p>初始化函数原型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">torch.distributed.init_process_group(backend, init_method=<span class="literal">None</span>, timeout=datetime.timedelta(<span class="number">0</span>, <span class="number">1800</span>), world_size=-<span class="number">1</span>, rank=-<span class="number">1</span>, store=<span class="literal">None</span>, group_name=<span class="string">&#x27;&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>其中，进程组后端是负责提供进程组聚合通信（collective
+communication）的库。PyTorch支持Gloo, MPI和NCCL三种，推荐的做法是，</p>
+<ul>
+<li>在分布式GPU训练时使用NCCL；</li>
+<li>在分布式CPU训练时使用Gloo。</li>
+</ul>
+<p>参考资料：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/facebookincubator/gloo">Gloo</a></p>
+<p>Gloo is a collective communications library. It comes with a number
+of collective algorithms useful for machine learning applications. These
+include a barrier, broadcast, and allreduce.</p>
+</blockquote>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/nccl">NVIDIA NCCL</a></p>
+<p>The NVIDIA Collective Communication Library (NCCL) implements
+multi-GPU and multi-node communication primitives optimized for NVIDIA
+GPUs and Networking. NCCL provides routines such as all-gather,
+all-reduce, broadcast, reduce, reduce-scatter as well as point-to-point
+send and receive that are optimized to achieve high bandwidth and low
+latency over PCIe and NVLink high-speed interconnects within a node and
+over NVIDIA Mellanox Network across nodes.</p>
+</blockquote>
+<p>初始化可以选择通过<code>init_method</code>填写通信地址和端口，也可以通过<code>store</code>来传入一个进程间共同访问的键值对容器。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># initialize with TCP in this example</span></span><br><span class="line">dist.init_process_group(backend=DIST_DEFAULT_BACKEND,</span><br><span class="line">                        init_method=DIST_DEFAULT_INIT_METHOD,</span><br><span class="line">                        world_size=DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">                        rank=rank)</span><br><span class="line"></span><br><span class="line"><span class="comment"># # Another way to initialize with environment variables</span></span><br><span class="line"><span class="comment"># os.environ[&quot;MASTER_PORT&quot;] = DIST_DEFAULT_PORT</span></span><br><span class="line"><span class="comment"># os.environ[&quot;MASTER_ADDR&quot;] = DIST_DEFAULT_ADDR</span></span><br><span class="line"><span class="comment"># os.environ[&quot;WORLD_SIZE&quot;] = str(DIST_DEFAULT_WORLD_SIZE)</span></span><br><span class="line"><span class="comment"># os.environ[&quot;RANK&quot;] = str(rank)</span></span><br><span class="line"><span class="comment"># dist.init_process_group(backend=DIST_DEFAULT_BACKEND)</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>例子中演示了基于<code>init_method</code>的通信方式，具体采用TCP连接的方式来初始化，也可通过环境变量的方式（见注释掉的代码）。另外，还可以使用共享的文件系统来实现初始化，可参阅<code>torch.distributed</code>的官方文档。我觉得TCP连接足够简单且兼容性好，这里就以TCP的方式为主了。</p>
+<h4 id="distributeddataparallel">DistributedDataParallel</h4>
+<blockquote>
+<p>参阅torch.nn.parallel.DistributedDataParallel的官方文档：</p>
+<p><a
+target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html">torch.nn.parallel.DistributedDataParallel</a></p>
+</blockquote>
+<p>首先，需要注意的是，在建立DDP之前，在N个GPU的机器上，spawn出N个进程的时候，需要确保每个进程负责其对应的那一个GPU，不要互相打架。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ensuring that each process exclusively works on a single GPU</span></span><br><span class="line">torch.cuda.set_device(rank)</span><br><span class="line">model.cuda(rank)</span><br><span class="line"><span class="comment"># When using a single GPU per process and per</span></span><br><span class="line"><span class="comment"># DistributedDataParallel, we need to divide the batch size</span></span><br><span class="line"><span class="comment"># ourselves based on the total number of GPUs we have</span></span><br><span class="line">model = nn.parallel.DistributedDataParallel(model, device_ids=[rank])</span><br></pre></td></tr></table></figure>
+<p>用<code>torch.nn.parallel.DistributedDataParallel</code>类包装原模型，并将该进程的模型映射到对应的GPU设备上。</p>
+<h4 id="distributedsampler">DistributedSampler</h4>
+<blockquote>
+<p>参阅torch.utils.data.distributed.DistributedSampler的官方文档：</p>
+<p><a
+target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.distributed.DistributedSampler">torch.utils.data.distributed.DistributedSampler</a></p>
+</blockquote>
+<p>其实就是在多进程的情况下，每个进程训练数据集的一个子集，不应互相重复，通过DistributedSampler来实现分布式的采样原数据集中的一个子集：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># dataset</span></span><br><span class="line">dataset = TinyDataset()</span><br><span class="line">dist_sampler = data.distributed.DistributedSampler(</span><br><span class="line">    dataset) <span class="keyword">if</span> args.distributed <span class="keyword">else</span> <span class="literal">None</span></span><br><span class="line">dataloader = data.dataloader.DataLoader(</span><br><span class="line">    dataset,</span><br><span class="line">    batch_size=DEFAULT_BATCH_SIZE // DIST_DEFAULT_WORLD_SIZE <span class="keyword">if</span> args.distributed <span class="keyword">else</span> DEFAULT_BATCH_SIZE,</span><br><span class="line">    shuffle=(dist_sampler <span class="keyword">is</span> <span class="literal">None</span>),</span><br><span class="line">    num_workers=DEFAULT_NUM_WORKERS_PER_GPU <span class="keyword">if</span> args.distributed <span class="keyword">else</span> DEFAULT_NUM_WORKERS_PER_GPU * DIST_DEFAULT_WORLD_SIZE,</span><br><span class="line">    sampler=dist_sampler)</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，多epoch场景下，需要在每个epoch开始前用<code>sampler.set_epoch(epoch)</code>设置当前的epoch，以免每次epoch训练的数据顺序都是相同的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" title="DistributedDataParallel(DDP) - PyTorch多进程并行计算">https://heary.cn/posts/DistributedDataParallel-DDP-PyTorch多进程并行计算/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/PyTorch/" rel="tag"><i class="fa fa-tag"></i> PyTorch</a>
+              <a href="/tags/Parallel-Computing/" rel="tag"><i class="fa fa-tag"></i> Parallel Computing</a>
+              <a href="/tags/Multiprocessing/" rel="tag"><i class="fa fa-tag"></i> Multiprocessing</a>
+              <a href="/tags/CUDA/" rel="tag"><i class="fa fa-tag"></i> CUDA</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/fasterrcnn-resnet50-fpn-%E4%BB%8Etorchvision%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Faster-R-CNN%E5%8E%9F%E7%90%86/" rel="prev" title="fasterrcnn_resnet50_fpn - 从torchvision源码理解Faster R-CNN原理">
+                  <i class="fa fa-chevron-left"></i> fasterrcnn_resnet50_fpn - 从torchvision源码理解Faster R-CNN原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E3%80%8A%E8%BF%9C%E8%A7%81%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" rel="next" title="《远见》读书笔记">
+                  《远见》读书笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"f29e15b88a20380fa2b855f8049ceda0"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

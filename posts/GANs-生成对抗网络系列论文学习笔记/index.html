@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近对生成对抗网络（GANs, Generative Adversarial Networks）相关研究感兴趣，阅读了一些论文。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GANs - 生成对抗网络系列论文学习笔记">
+<meta property="og:url" content="https://heary.cn/posts/GANs-%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="最近对生成对抗网络（GANs, Generative Adversarial Networks）相关研究感兴趣，阅读了一些论文。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-04-02T11:54:04.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.588Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Papers">
+<meta property="article:tag" content="GAN">
+<meta property="article:tag" content="Deep Learning">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/GANs-%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/GANs-%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/","path":"posts/GANs-生成对抗网络系列论文学习笔记/","title":"GANs - 生成对抗网络系列论文学习笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>GANs - 生成对抗网络系列论文学习笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gans---%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0"><span class="nav-text">GANs -
+生成对抗网络系列论文学习笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-text">0 背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gans"><span class="nav-text">1 GANs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#conditional-gans"><span class="nav-text">2 Conditional GANs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dcgans"><span class="nav-text">3 DCGANs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#improved-techniques-for-training-gans"><span class="nav-text">4 Improved Techniques for
+Training GANs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pix2pix"><span class="nav-text">5 pix2pix</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#stackgan"><span class="nav-text">6 StackGAN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cyclegan"><span class="nav-text">7 CycleGAN</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/GANs-%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="GANs - 生成对抗网络系列论文学习笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          GANs - 生成对抗网络系列论文学习笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-04-02 19:54:04" itemprop="dateCreated datePublished" datetime="2019-04-02T19:54:04+08:00">2019-04-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>最近对生成对抗网络（GANs, <em>Generative Adversarial
+Networks</em>）相关研究感兴趣，阅读了一些论文。</p>
+<span id="more"></span>
+<h1 id="gans---生成对抗网络系列论文学习笔记">GANs -
+生成对抗网络系列论文学习笔记</h1>
+<p>本文主要按照论文发表的时间顺序概览生成对抗网络领域的主要研究。</p>
+<h2 id="背景">0 背景</h2>
+<p>相关资料：</p>
+<blockquote>
+<p>新智元介绍文章：<a
+target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/gH6b5zgvWArOSfKBSIG1Ww">必读！生成对抗网络GAN论文TOP
+10</a></p>
+</blockquote>
+<blockquote>
+<p>GitHub相关专题：<a target="_blank" rel="noopener" href="https://github.com/nightrome">nightrome</a>
+/ <a
+target="_blank" rel="noopener" href="https://github.com/nightrome/really-awesome-gan"><strong>really-awesome-gan</strong></a></p>
+</blockquote>
+<h2 id="gans">1 GANs</h2>
+<blockquote>
+<p>Goodfellow I, Pouget-Abadie J, Mirza M, et al. Generative adversarial
+nets[C]//Advances in neural information processing systems. 2014:
+2672-2680.</p>
+</blockquote>
+<p><strong>生成对抗网络</strong>（<strong>GANs</strong>, <em>Generative
+Adversarial Networks</em>）由<em>Ian
+Goodfellow</em>等人于2014年提出。</p>
+<p>已有研究主要关注概率分布函数的参数估计，通过参数方法实现生成器。但似然函数难以处理，需要大量近似。例如：深层波兹曼机依赖似然函数。因此需要生成模型，避免依赖形式明确的似然函数。</p>
+<p>GANs通过同时对抗训练两个模型：生成模型<span
+class="math inline">\(G\)</span>（<em>Generative
+model</em>）和判别模型<span
+class="math inline">\(D\)</span>（<em>Discriminative
+model</em>）来取得高质量的生成模型。</p>
+<p>生成模型<span
+class="math inline">\(G\)</span>的目的在于捕捉数据分布信息。生成模型的输入是噪声，通过传递输入噪声生成拟合训练集样本概率分布的生成样本。</p>
+<p>判别模型<span
+class="math inline">\(D​\)</span>的目的在于估测样本来自于训练集（真实样本，而非生成模型伪造的生成样本）的概率。判别模型的输入是高维的、丰富的信息，输出是类型标记。</p>
+<p>对抗网络框架（<em>adversarial nets</em>
+framework），包含：生成模型<span
+class="math inline">\(G\)</span>和判别模型<span
+class="math inline">\(D\)</span>，它们通过对抗来决定样本究竟来自模型分布还是数据分布。对抗生成网络基于最小最大化博弈（<em>minimax
+game</em>），生成模型和判别模型作为博弈的双方，训练过程中的目标分别是最小化和最大化价值函数（<em>value
+function</em>）。训练最后的结果就是判别模型无法分辨真实数据和生成数据，此时它的概率分布，例如：就是恒为<span
+class="math inline">\(\frac{1}{2}\)</span>。</p>
+<p><span class="math display">\[
+\min\limits_G\max\limits_D{V(D, G)} = \mathbb E_{x \sim
+p_{data}(x)}[\log D(x)] + \mathbb E_{z \sim p_{z}(z)}[\log (1 -
+D(G(z)))]
+\]</span></p>
+<p>以造假币者（<em>counterfeiters</em>）为例：造假币者即生成模型，而分辨和调查假币的警察就是判别模型。造假币者和警察互相对抗，在对抗中，造假币者不得不制造更加逼近真币的假币，而警察也会在持续的对抗中提升自己的判别能力。总而言之，对抗带来的训练会提高判别模型和生成模型各自的能力。</p>
+<p>该论文中的生成模型和判别模型均通过多层感知机实现。</p>
+<h2 id="conditional-gans">2 Conditional GANs</h2>
+<blockquote>
+<p>Mirza M, Osindero S. Conditional generative adversarial nets[J].
+arXiv preprint arXiv:1411.1784, 2014.</p>
+</blockquote>
+<p><strong>条件生成对抗网络</strong>（Conditional
+GANs(在一些论文亦中称为cGANs), <em>Conditional Generative Adversarial
+Nets</em>）由<em>Mehdi Mirza</em>和<em>Simon
+Osindero</em>在2014年提出。</p>
+<p>Conditional
+GANs是在GANs的基础上发展出的新模型，其主要特点是可以对生成器和判别器施加条件。</p>
+<p>GANs为无条件生成模型，无法控制数据生成模式。GAN的值函数（<em>value
+func</em>）的<span class="math inline">\(x​\)</span>是无条件的，<span
+class="math inline">\(x​\)</span>均来自训练样本，无类别分类。仅需额外的辅助数据<span
+class="math inline">\(y​\)</span>就可以将GAN拓展为Conditional
+GAN。辅助数据<span
+class="math inline">\(y​\)</span>可以是类别标签、也可以是来自其他模态的数据（例如：<span
+class="math inline">\(x​\)</span>图<span
+class="math inline">\(y​\)</span>文）。添加一个输入层（<em>input
+layer</em>）即可增加条件输入<span
+class="math inline">\(y​\)</span>（<span
+class="math inline">\(x​\)</span>或<span
+class="math inline">\(z​\)</span>和<span
+class="math inline">\(y​\)</span>并行输入）。生成器：通过联合隐层表示来结合<span
+class="math inline">\(z​\)</span>和<span
+class="math inline">\(y​\)</span>。</p>
+<p>相较于GAN中的值函数中的<span
+class="math inline">\(D(x)\)</span>和<span
+class="math inline">\(G(z)\)</span>，Conditional
+GAN的目标函数（<em>object func</em>）的区别就在于<span
+class="math inline">\(D(x|y)\)</span>和<span
+class="math inline">\(G(z|y)\)</span>都增加了条件<span
+class="math inline">\(y​\)</span>。</p>
+<p><span class="math display">\[
+\min\limits_G\max\limits_D{V(D, G)} = \mathbb E_{x \sim
+p_{data}(x)}[\log D(x|y)] + \mathbb E_{z \sim p_{z}(z)}[\log (1 -
+D(G(z|y)))]
+\]</span></p>
+<p>作者在MNIST手写字符数据集上做了单模态（<em>unimodal</em>）实验，以真实手写字符样本为x，对应数字为y，训练Conditional
+GANs来生成指定类别（数字0~9）所对应的手写字符图像。作者在Flickr的图文数据上开展了多模态（<em>multimodal</em>）实验，以图片为x，用户生成元数据（UGM,
+<em>user-generated metadata</em>）为y，训练Conditional
+GANs来生成tag-vectors。评价方法：为每个图片生成100个样本，其中每个样本计算top-20近义词，统计以上100×20个词，取其中top-10最频繁词作为图片的生成标记（<em>generated
+tags</em>）</p>
+<h2 id="dcgans">3 DCGANs</h2>
+<blockquote>
+<p>Radford A, Metz L, Chintala S. Unsupervised representation learning
+with deep convolutional generative adversarial networks[J]. arXiv
+preprint arXiv:1511.06434, 2015.</p>
+</blockquote>
+<p>深度卷积生成对抗网络（ DCGANs, deep convolutional generative
+adversarial networks）由Alec Radford、Luke Metz和Soumith
+Chintala在2015年提出。</p>
+<p>DCGANs可以学习从目标部分到场景的多层表示（图像特征提取），利用GANs结构来学习大量无标记数据得到可复用的特征表示继而用于有监督学习任务。</p>
+<p>论文主要包含以下四点内容：</p>
+<ol type="1">
+<li>DCGAN：提出并评价了一系列限制条件，主要用于解决GANs训练不稳定问题。详细参阅论文第3节<strong>APPROACH
+AND MODEL ARCHITECTURE</strong>的论述和Architecture guidelines for
+stable Deep Convolutional GANs总结框。</li>
+<li>指出判别器在图像分类任务上相较于其它无监督学习算法有优势。</li>
+<li>指出GANs习得的过滤器可以学会描绘特定目标。</li>
+<li>指出生成器的向量算术属性可以便捷地操纵生成样本的语义质量。</li>
+</ol>
+<p>该论文在的典型实验，通过尝试控制输入噪声，继而完全移除生成模型生成图像中的窗户，说明了生成模型通过训练学习到了场景中的物体特征。</p>
+<h2 id="improved-techniques-for-training-gans">4 Improved Techniques for
+Training GANs</h2>
+<blockquote>
+<p>Salimans T, Goodfellow I, Zaremba W, et al. Improved techniques for
+training gans[C]//Advances in neural information processing systems.
+2016: 2234-2242.</p>
+</blockquote>
+<p>本文由Tim Salimans等人于2016年发表。</p>
+<p>本文提出了一系列对GANs模型的训练的改进方法以实现收敛的GANs，改进技术包含：</p>
+<ol type="1">
+<li>Feature matching</li>
+<li>Minibatch discrimination</li>
+<li>Historical averaging</li>
+<li>One-sided label smoothing</li>
+<li>Virtual batch normalization</li>
+</ol>
+<p>没细看，不展开写。</p>
+<h2 id="pix2pix">5 pix2pix</h2>
+<blockquote>
+<p>Isola P, Zhu J Y, Zhou T, et al. Image-to-image translation with
+conditional adversarial networks[C]//Proceedings of the IEEE conference
+on computer vision and pattern recognition. 2017: 1125-1134.</p>
+</blockquote>
+<p>本文由Phillip Isola等人于2017年发表于ICCV。</p>
+<p>本文主要研究图到图变换（image-to-image translation）问题。</p>
+<p>cGANs不仅学习图到图之间的映射，还学习实际任务的损失函数。</p>
+<p>已有研究存在问题：</p>
+<ol type="1">
+<li>需要人工设计有效的损失函数</li>
+<li>设计有效的损失函数十分困难</li>
+</ol>
+<p>思路：可否寻找更高层面上的目标取代因具体任务而人工设计的损失函数？</p>
+<p>cGANs模型非常适合实现图到图变换问题： 1.
+GANs通过对抗（最小最大化博弈）来训练生成器和判别器，无须人工设计指定任务的损失函数；
+2. cGANs可输入条件控制输出，适合用于实现可控的图到图翻译。</p>
+<p>本文主要贡献：</p>
+<ol type="1">
+<li>阐述cGANs在广泛的图到图变换任务上的有效性；</li>
+<li>提出一个简单且效果不错的框架，并分析架构选择细节</li>
+</ol>
+<p>本文框架特点： 1. 生成器基于U-Net架构； 2.
+判别器基于卷积PatchGAN分类器。</p>
+<p>本文生成器的目标： 1. 既要骗过判别器； 2.
+又要输出接近真值的图像。</p>
+<p>因此增加L2/L1惩罚项，以减小生成图像与真值图像的差异。使用L1相较于L2可减少生成图像模糊。本文的生成器通过dropout机制引入并控制GANs的噪声</p>
+<p>本文于项目<a
+target="_blank" rel="noopener" href="https://github.com/phillipi/pix2pix">pix2pix</a>关联，各个社群的人们把pix2pix应用到了各不相同的图到图变换任务上。</p>
+<h2 id="stackgan">6 StackGAN</h2>
+<blockquote>
+<p>Zhang H, Xu T, Li H, et al. Stackgan: Text to photo-realistic image
+synthesis with stacked generative adversarial networks[C]//Proceedings
+of the IEEE International Conference on Computer Vision. 2017:
+5907-5915.</p>
+</blockquote>
+<p>StackGAN由Han Zhang等人于2017年发表于ICCV。</p>
+<p>StackGAN实现的功能基于自然语言文本描述，生成256×256的仿真照片级图像（<em>photo-realistic
+images</em>）。</p>
+<p>基于GANs生成高分辨率图像主要难题：真实自然图像的分布与应用模型的分布在高维像素空间中难以重叠。已有研究类似于本文Stage-Ⅰ
+GAN的工作，只能生成粗略的低分辨率图像。</p>
+<p>StackGAN设计思路： 模仿人类绘画，将高清图像生成分解为两个子问题：</p>
+<ol type="1">
+<li>从无到有：从文本到低分辨率粗略图；</li>
+<li>从有到精：从低分辨率粗略图+文本到高分辨率精细图。</li>
+</ol>
+<p>StackGAN模型结构：</p>
+<ol type="1">
+<li><p>Stage-Ⅰ
+GAN：输入时文本描述，输出是仅含形状和色彩的初步生成图像。</p></li>
+<li><p>Stage-Ⅱ GAN：输入时Stage-Ⅰ
+GAN输出的初步图像和文本描述，输出是高清的、逼真摄影细节的图像</p></li>
+</ol>
+<p>本文还提出了条件增强（<em>Conditioning
+Augmentation</em>）技术。相较于以往研究把文本嵌入（<em>text
+embedding</em>）<span
+class="math inline">\(\varphi_t​\)</span>直接作为cGANs的条件变量，直接输入生成模型。本文认为，文本嵌入所在的隐空间（<em>latent
+space</em>）是相当高维的（通常高达100维以上），相较于高维的文本嵌入隐空间，实际的文本图片对的数据量会显得很少，相对少量的文本嵌入在隐空间中会出现隐数据簇（<em>latent
+data
+manifold</em>）不连续（<em>discontinuity</em>）的问题。这种隐数据簇不连续问题会对生成模型的训练和学习带来很不利的影响，例如：会造成生成器模型对隐空间中的训练数据（数据量小）过拟合。</p>
+<p>条件增强技术的方案是从独立高斯分布<span
+class="math inline">\(\mathcal{N}(\mu(\varphi_t),
+\Sigma(\varphi_t))​\)</span>中随机采样取得隐变量<span
+class="math inline">\(\hat{c}​\)</span>作为生成模型的条件输入。条件增强技术使得生成模型的输入不再只依赖有限的真实样本作为训练输入，而是通过建立独立高斯分布，取得无限多的生成模型条件输入来训练生成模型。这使得生成模型对样本扰动具备更好的鲁棒性（<em>robustness</em>）。为了保障在条件簇（<em>conditioning
+manifold</em>）上的平滑度，且避免过拟合，为生成模型训练的目标函数中增加正则化项：
+<span class="math display">\[
+D_{KL}(\mathcal{N}(\mu(\varphi_t), \Sigma(\varphi_t)) || \mathcal{N}(0,
+I))
+\]</span></p>
+<blockquote>
+<p>Kullback-Leibler divergence (KL divergence)：</p>
+<p>相对熵（relative
+entropy），又称为KL散度，信息散度，信息增益。衡量两个概率分布之间的差异度。</p>
+</blockquote>
+<p>通过将该项作为正则化项，在训练生成模型时，梯度下降最小化生成模型目标函数（包含该正则化项），可以减小独立高斯分布<span
+class="math inline">\(\mathcal{N}(\mu(\varphi_t),
+\Sigma(\varphi_t))\)</span>与<span class="math inline">\(\mathcal{N}(0,
+I)​\)</span>的差异性。</p>
+<p>本文使用了Inception score来计算评价矩阵（<em>evaluation
+metrics</em>）来评价生成模型。 <span class="math display">\[
+I = \exp(\mathbb E_xD_{KL}(p(y|x)||p(y)))
+\]</span> Inception score基于KL散度，生成模型越好，则<span
+class="math inline">\(p(y|x)\)</span>和<span
+class="math inline">\(p(y)\)</span>之间的KL散度会更大。简单地来说，条件<span
+class="math inline">\(x​\)</span>输入到生成模型后，概率分布是有明显不同的。</p>
+<h2 id="cyclegan">7 CycleGAN</h2>
+<blockquote>
+<p>Zhu J Y, Park T, Isola P, et al. Unpaired image-to-image translation
+using cycle-consistent adversarial networks[C]//Proceedings of the IEEE
+international conference on computer vision. 2017: 2223-2232.</p>
+</blockquote>
+<p>CycleGAN由Jun-Yan Zhu等人于2017年发表于ICCV。</p>
+<p>CycleGAN主要研究的是如何在<strong>没有成对样本</strong>的情况下，学习把图像从领域X转换到领域Y？（成对训练数据难以获得）</p>
+<p>本文提出了循环一致性损失（<em>cycle consistency
+loss</em>）来应对这种高度欠约束的映射学习。</p>
+<p>思路是，在没有成对数据的情况下，通过学习两个图片集各自特征，实现相互转换。</p>
+<p>初步思想：</p>
+<ol type="1">
+<li>生成模型：<span class="math inline">\(G: X→Y​\)</span>，<span
+class="math inline">\(\hat y = G(x)​\)</span>，根据<span
+class="math inline">\(X​\)</span>中的样本生成类<span
+class="math inline">\(Y​\)</span>样本；</li>
+<li>判别模型：判别<span class="math inline">\(\hat y\)</span>（或<span
+class="math inline">\(y\)</span>）是生成样本还是真实的<span
+class="math inline">\(Y\)</span>中样本。</li>
+</ol>
+<p>根据初步思想建立的对抗网络模型会遇到问题，因为<span
+class="math inline">\(G: X→Y\)</span>不意味着<span
+class="math inline">\(x→y\)</span>是有意义的对应关系。实际的实验中，会遭遇模式溃缩（<em>mode
+collapse</em>）难题——所有的输入图片都映射到了同一个输出图片。</p>
+<p>为了应对mode collapse难题，作者提出模型必须是循环一致的（<em>cycle
+consistent</em>）。<span class="math inline">\(G: X→Y\)</span>和<span
+class="math inline">\(F: Y→X\)</span>，<span
+class="math inline">\(G\)</span>和<span
+class="math inline">\(F\)</span>映射必须是逆序后一致的。例如：英语句子<span
+class="math inline">\(x\)</span>转换为法语句子<span
+class="math inline">\(y\)</span>，法语句子<span
+class="math inline">\(y\)</span>转换为英语后应该与原始英语句子<span
+class="math inline">\(x\)</span>尽可能一致。为了保证循环一致，本文提出了循环一致性损失：把循环一致性损失加入到对抗生成网络的损失中，争取<span
+class="math inline">\(F(G(x))≈x\)</span>和<span
+class="math inline">\(G(F(y))≈y​\)</span>的循环一致性。</p>
+<p>循环一致性损失包含：</p>
+<ol type="1">
+<li><p>正向（forward）循环一致性：从x到G(x)，再通过F(G(x))逆向变换回去须接近原始x。</p></li>
+<li><p>反向（backward）循环一致性：从y到F(y)，再通过G(F(y))逆向变换回去须接近原始y。</p></li>
+</ol>
+<p><span class="math display">\[
+{\mathcal L}_{cyc}(G,F)={\mathbb E}_{x \sim
+p_{data}(x)}[{\|F(G(x))-x\|}_{1}]+{\mathbb E}_{y \sim
+p_{data}(y)}[{\|G(F(y))-y\|}_{1}]
+\]</span></p>
+<p>循环一致性损失计入了正向一致性损失（从x开始变换）和反向一致性损失（从y开始变换）。损失通过计算L1范数距离取得。</p>
+<p>完整的目标损失：计入<span class="math inline">\(X→Y\)</span>的<span
+class="math inline">\(G\)</span>和<span
+class="math inline">\(D_Y\)</span>损失、<span
+class="math inline">\(Y→X\)</span>的<span
+class="math inline">\(F\)</span>和<span
+class="math inline">\(D_X\)</span>损失以及<span
+class="math inline">\(X\)</span>与<span
+class="math inline">\(Y\)</span>互转的循环一致性损失。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/GANs-%E7%94%9F%E6%88%90%E5%AF%B9%E6%8A%97%E7%BD%91%E7%BB%9C%E7%B3%BB%E5%88%97%E8%AE%BA%E6%96%87%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="GANs - 生成对抗网络系列论文学习笔记">https://heary.cn/posts/GANs-生成对抗网络系列论文学习笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Papers/" rel="tag"><i class="fa fa-tag"></i> Papers</a>
+              <a href="/tags/GAN/" rel="tag"><i class="fa fa-tag"></i> GAN</a>
+              <a href="/tags/Deep-Learning/" rel="tag"><i class="fa fa-tag"></i> Deep Learning</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E5%8D%9A%E5%BC%88%E8%AE%BA%E7%AC%94%E8%AE%B0/" rel="prev" title="博弈论笔记">
+                  <i class="fa fa-chevron-left"></i> 博弈论笔记
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/MathJax-Hexo-Next%E6%B8%B2%E6%9F%93LaTex%E6%95%B0%E5%AD%A6%E5%85%AC%E5%BC%8F/" rel="next" title="MathJax - Hexo Next渲染LaTex数学公式">
+                  MathJax - Hexo Next渲染LaTex数学公式 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"8332f02c79ad7f42c52fe6b4248fb9ea"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

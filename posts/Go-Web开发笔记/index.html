@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="整理Go Web开发的相关知识点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go Web开发笔记">
+<meta property="og:url" content="https://heary.cn/posts/Go-Web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="整理Go Web开发的相关知识点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-06T04:01:29.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.604Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="Web">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="ORM">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/Go-Web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/Go-Web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/","path":"posts/Go-Web开发笔记/","title":"Go Web开发笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Go Web开发笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#go-web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0"><span class="nav-text">Go Web开发笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#gowikigo-web%E5%BA%94%E7%94%A8%E6%A1%88%E4%BE%8B"><span class="nav-text">1 GoWiki：Go Web应用案例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="nav-text">1.1 项目结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-text">1.2 代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#wiki.go"><span class="nav-text">1.3.1 wiki.go</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#edit.html"><span class="nav-text">1.3.2 edit.html</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#view.html"><span class="nav-text">1.3.3 view.html</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E8%AF%B4%E6%98%8E"><span class="nav-text">1.3 运行说明</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gingo-web%E6%A1%86%E6%9E%B6"><span class="nav-text">2 Gin：Go Web框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8"><span class="nav-text">3 数据库存储</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#sql"><span class="nav-text">3.1 SQL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nosql"><span class="nav-text">3.2 NoSQL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#beegoormgo-orm%E6%A1%86%E6%9E%B6"><span class="nav-text">3.3 beego&#x2F;orm：Go ORM框架</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/Go-Web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Go Web开发笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go Web开发笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-05-06 12:01:29" itemprop="dateCreated datePublished" datetime="2021-05-06T12:01:29+08:00">2021-05-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>整理Go Web开发的相关知识点。</p>
+<span id="more"></span>
+<h1 id="go-web开发笔记">Go Web开发笔记</h1>
+<h2 id="gowikigo-web应用案例">1 GoWiki：Go Web应用案例</h2>
+<p>GoWiki是一个极简的Go
+Web应用，使用Go语言内置的<code>html/template</code>和<code>net/http</code>等库实现，实现基本的百科网站功能，包含词条创建、编辑、保存和浏览功能。</p>
+<p>本节内容总结自官方教程<a
+target="_blank" rel="noopener" href="https://golang.org/doc/articles/wiki/">Writing Web
+Applications</a>。</p>
+<h3 id="项目结构">1.1 项目结构</h3>
+<p><code>gowiki</code></p>
+<ul>
+<li><code>wiki.go</code></li>
+<li><code>edit.html</code></li>
+<li><code>view.html</code></li>
+</ul>
+<h3 id="代码实现">1.2 代码实现</h3>
+<h4 id="wiki.go">1.3.1 wiki.go</h4>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Writing Web Applications</span></span><br><span class="line"><span class="comment">// Official Example from https://golang.org/doc/articles/wiki/</span></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;html/template&quot;</span></span><br><span class="line">	<span class="string">&quot;io/ioutil&quot;</span></span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;net/http&quot;</span></span><br><span class="line">	<span class="string">&quot;regexp&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Page <span class="keyword">struct</span> &#123;</span><br><span class="line">	Title <span class="type">string</span></span><br><span class="line">	Body  []<span class="type">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> templates = template.Must(template.ParseFiles(<span class="string">&quot;edit.html&quot;</span>, <span class="string">&quot;view.html&quot;</span>))</span><br><span class="line"><span class="keyword">var</span> validPath = regexp.MustCompile(<span class="string">&quot;^/(edit|save|view)/([a-zA-Z0-9]+)$&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Page)</span></span> save() <span class="type">error</span> &#123;</span><br><span class="line">	filename := p.Title + <span class="string">&quot;.txt&quot;</span></span><br><span class="line">	<span class="keyword">return</span> ioutil.WriteFile(filename, p.Body, <span class="number">0600</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">loadPage</span><span class="params">(title <span class="type">string</span>)</span></span> (*Page, <span class="type">error</span>) &#123;</span><br><span class="line">	filename := title + <span class="string">&quot;.txt&quot;</span></span><br><span class="line">	body, err := ioutil.ReadFile(filename)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;Page&#123;Title: title, Body: body&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getTitle</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> (<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	m := validPath.FindStringSubmatch(r.URL.Path)</span><br><span class="line">	<span class="keyword">if</span> m == <span class="literal">nil</span> &#123;</span><br><span class="line">		http.NotFound(w, r)</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;&quot;</span>, errors.New(<span class="string">&quot;invalid Page Title&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> m[<span class="number">2</span>], <span class="literal">nil</span> <span class="comment">// The title is the second subexpression.</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">renderTemplate</span><span class="params">(w http.ResponseWriter, tmpl <span class="type">string</span>, p *Page)</span></span> &#123;</span><br><span class="line">	err := templates.ExecuteTemplate(w, tmpl+<span class="string">&quot;.html&quot;</span>, p)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, err.Error(), http.StatusInternalServerError)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">viewHandler</span><span class="params">(w http.ResponseWriter, r *http.Request, title <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	p, err := loadPage(title)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Redirect(w, r, <span class="string">&quot;/edit/&quot;</span>+title, http.StatusFound)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	renderTemplate(w, <span class="string">&quot;view&quot;</span>, p)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">editHandler</span><span class="params">(w http.ResponseWriter, r *http.Request, title <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	p, err := loadPage(title)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		p = &amp;Page&#123;Title: title&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	renderTemplate(w, <span class="string">&quot;edit&quot;</span>, p)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">saveHandler</span><span class="params">(w http.ResponseWriter, r *http.Request, title <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	body := r.FormValue(<span class="string">&quot;body&quot;</span>)</span><br><span class="line">	p := &amp;Page&#123;Title: title, Body: []<span class="type">byte</span>(body)&#125;</span><br><span class="line">	err := p.save()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, err.Error(), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	http.Redirect(w, r, <span class="string">&quot;/view/&quot;</span>+title, http.StatusFound)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">makeHandler</span><span class="params">(fn <span class="keyword">func</span>(http.ResponseWriter, *http.Request, <span class="type">string</span>)</span></span>) http.HandlerFunc &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">		m := validPath.FindStringSubmatch(r.URL.Path)</span><br><span class="line">		<span class="keyword">if</span> m == <span class="literal">nil</span> &#123;</span><br><span class="line">			http.NotFound(w, r)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		fn(w, r, m[<span class="number">2</span>])</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	http.HandleFunc(<span class="string">&quot;/view/&quot;</span>, makeHandler(viewHandler))</span><br><span class="line">	http.HandleFunc(<span class="string">&quot;/edit/&quot;</span>, makeHandler(editHandler))</span><br><span class="line">	http.HandleFunc(<span class="string">&quot;/save/&quot;</span>, makeHandler(saveHandler))</span><br><span class="line">	host := <span class="string">&quot;127.0.0.1&quot;</span></span><br><span class="line">	port := <span class="number">8080</span></span><br><span class="line">	addr := fmt.Sprintf(<span class="string">&quot;%s:%v&quot;</span>, host, port)</span><br><span class="line">	fmt.Printf(<span class="string">&quot;goWiki start listening at http://%s\n&quot;</span>, addr)</span><br><span class="line">	log.Fatal(http.ListenAndServe(addr, <span class="literal">nil</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="edit.html">1.3.2 edit.html</h4>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">h1</span>&gt;</span>Editing &#123;&#123;.Title&#125;&#125;<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">&quot;/save/&#123;&#123;.Title&#125;&#125;&quot;</span> <span class="attr">method</span>=<span class="string">&quot;POST&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span><span class="tag">&lt;<span class="name">textarea</span> <span class="attr">name</span>=<span class="string">&quot;body&quot;</span> <span class="attr">rows</span>=<span class="string">&quot;20&quot;</span> <span class="attr">cols</span>=<span class="string">&quot;80&quot;</span>&gt;</span>&#123;&#123;printf &quot;%s&quot; .Body&#125;&#125;<span class="tag">&lt;/<span class="name">textarea</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;submit&quot;</span> <span class="attr">value</span>=<span class="string">&quot;Save&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="view.html">1.3.3 view.html</h4>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">h1</span>&gt;</span>&#123;&#123;.Title&#125;&#125;<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>[<span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;/edit/&#123;&#123;.Title&#125;&#125;&quot;</span>&gt;</span>edit<span class="tag">&lt;/<span class="name">a</span>&gt;</span>]<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;&#123;printf &quot;%s&quot; .Body&#125;&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="运行说明">1.3 运行说明</h3>
+<p>单文件go程序，通过以下命令即可运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go run wiki.go</span><br></pre></td></tr></table></figure>
+<p>或编译后再运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go build wiki.go</span><br><span class="line">./wiki.go</span><br></pre></td></tr></table></figure>
+<h2 id="gingo-web框架">2 Gin：Go Web框架</h2>
+<p>从上节可以看到，Go语言的<code>net/http</code>和<code>html/template</code>已经足够实现基本的Web应用，但Go自带的路由<code>http.ServerMux</code>机制简单，只能实现从请求路径（string）到处理函数（handler）的映射，无法根据HTTP的方法（Method），请求头（header）进行路由。Go
+Web框架实现了比内置库更丰富的功能，例如<a
+target="_blank" rel="noopener" href="https://github.com/gin-gonic/gin">Gin</a>。</p>
+<blockquote>
+<p><strong><a target="_blank" rel="noopener" href="https://github.com/gin-gonic/gin">Gin Web
+Framework</a></strong></p>
+<p>Gin is a web framework written in Go (Golang). It features a
+martini-like API with performance that is up to 40 times faster thanks
+to <a target="_blank" rel="noopener" href="https://github.com/julienschmidt/httprouter">httprouter</a>.
+If you need performance and good productivity, you will love Gin.</p>
+</blockquote>
+<p>此外，还有其他Go Web框架，如：<a
+target="_blank" rel="noopener" href="https://github.com/gorilla/mux">gorilla/mux</a>、<a
+target="_blank" rel="noopener" href="https://github.com/labstack/echo">echo</a>。</p>
+<h2 id="数据库存储">3 数据库存储</h2>
+<h3 id="sql">3.1 SQL</h3>
+<p>Go语言没有内置数据库驱动。</p>
+<p>Go语言定义了<code>database/sql</code>接口，分离出接口实现与接口调用，使得调用方改换数据库时无需修改代码。</p>
+<blockquote>
+<p>参阅：<a
+target="_blank" rel="noopener" href="https://github.com/longjoy/micro-go-book/blob/master/ch5-web/mysql/mysql.go">longjoy/micro-go-book/ch5-web/mysql/mysql.go</a></p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	db, err = sql.Open(<span class="string">&quot;mysql&quot;</span>,</span><br><span class="line">		<span class="string">&quot;root:a123456@tcp(47.96.140.41:3366)/user?charset=utf8&quot;</span>)</span><br><span class="line">	checkErr(err)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">queryByName</span><span class="params">(name <span class="type">string</span>)</span></span> User &#123;</span><br><span class="line">	user := User&#123;&#125;</span><br><span class="line">	stmt, err := db.Prepare(<span class="string">&quot;select * from user where name=?&quot;</span>)</span><br><span class="line">	checkErr(err)</span><br><span class="line"></span><br><span class="line">	rows, _ := stmt.Query(name)</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;\nafter deleting records: &quot;</span>)</span><br><span class="line">	<span class="keyword">for</span> rows.Next() &#123;</span><br><span class="line">		<span class="keyword">var</span> id <span class="type">int</span></span><br><span class="line">		<span class="keyword">var</span> name <span class="type">string</span></span><br><span class="line">		<span class="keyword">var</span> habits <span class="type">string</span></span><br><span class="line">		<span class="keyword">var</span> createdTime <span class="type">string</span></span><br><span class="line">		err = rows.Scan(&amp;id, &amp;name, &amp;habits, &amp;createdTime)</span><br><span class="line">		checkErr(err)</span><br><span class="line">		fmt.Printf(<span class="string">&quot;[%d, %s, %s, %s]\n&quot;</span>, id, name, habits, createdTime)</span><br><span class="line">		user = User&#123;id, name, habits, createdTime&#125;</span><br><span class="line">		<span class="keyword">break</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> user</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">store</span><span class="params">(user User)</span></span> &#123;</span><br><span class="line">	<span class="comment">//插入数据</span></span><br><span class="line">	stmt, err := db.Prepare(<span class="string">&quot;INSERT INTO user SET name=?,habits=?,created_time=?&quot;</span>)</span><br><span class="line">	t := time.Now().UTC().Format(<span class="string">&quot;2006-01-02&quot;</span>)</span><br><span class="line">	res, err := stmt.Exec(user.Name, user.Habits, t)</span><br><span class="line">	checkErr(err)</span><br><span class="line"></span><br><span class="line">	id, err := res.LastInsertId()</span><br><span class="line">	checkErr(err)</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">&quot;last insert id is: %d\n&quot;</span>, id)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="nosql">3.2 NoSQL</h3>
+<p>Go语言的结构体和NoSQL的JSON可以很好地直接对应起来，因此，Go语言中一般可以直接操作NoSQL，不依赖ORM。</p>
+<blockquote>
+<p>参阅：<a
+target="_blank" rel="noopener" href="https://github.com/longjoy/micro-go-book/blob/master/ch5-web/mongo/mongo.go">longjoy/micro-go-book/ch5-web/mongo/mongo.go</a></p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">connect</span><span class="params">(cName <span class="type">string</span>)</span></span> (*mgo.Session, *mgo.Collection) &#123;</span><br><span class="line">	session, err := mgo.Dial(<span class="string">&quot;mongodb://47.96.140.41:27017/&quot;</span>) <span class="comment">//Mongodb&#x27;s connection</span></span><br><span class="line">	checkErr(err)</span><br><span class="line">	session.SetMode(mgo.Monotonic, <span class="literal">true</span>)</span><br><span class="line">	<span class="comment">//return a instantiated collect</span></span><br><span class="line">	<span class="keyword">return</span> session, session.DB(<span class="string">&quot;test&quot;</span>).C(cName)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">queryByName</span><span class="params">(name <span class="type">string</span>)</span></span> []User &#123;</span><br><span class="line">	<span class="keyword">var</span> user []User</span><br><span class="line">	s, c := connect(<span class="string">&quot;user&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> s.Close()</span><br><span class="line">	err := c.Find(bson.M&#123;<span class="string">&quot;name&quot;</span>: name&#125;).All(&amp;user)</span><br><span class="line">	checkErr(err)</span><br><span class="line">	<span class="keyword">return</span> user</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">store</span><span class="params">(user User)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">	s, c := connect(<span class="string">&quot;user&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> s.Close()</span><br><span class="line">	user.Id = bson.NewObjectId().Hex()</span><br><span class="line">	<span class="keyword">return</span> c.Insert(&amp;user)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="beegoormgo-orm框架">3.3 beego/orm：Go ORM框架</h3>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/beego/beego">Beego</a></p>
+<p>Beego is used for rapid development of enterprise application in Go,
+including RESTful APIs, web apps and backend services.</p>
+<p>It is inspired by Tornado, Sinatra and Flask. beego has some
+Go-specific features such as interfaces and struct embedding.</p>
+</blockquote>
+<p>Beego是一个简单易用的企业级Go应用开发框架，其中包含了ORM框架。</p>
+<p>Beego的ORM的具体使用方法可以参阅其文档：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://beego.me/docs/mvc/model/orm.md">ORM 使用方法</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/Go-Web%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/" title="Go Web开发笔记">https://heary.cn/posts/Go-Web开发笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/HTTP/" rel="tag"><i class="fa fa-tag"></i> HTTP</a>
+              <a href="/tags/Web/" rel="tag"><i class="fa fa-tag"></i> Web</a>
+              <a href="/tags/Golang/" rel="tag"><i class="fa fa-tag"></i> Golang</a>
+              <a href="/tags/ORM/" rel="tag"><i class="fa fa-tag"></i> ORM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/matplotlib%E7%BB%98%E5%88%B6%E5%9B%BE%E5%83%8F%E6%B3%A8%E6%84%8F%E5%8A%9B/" rel="prev" title="matplotlib绘制图像注意力">
+                  <i class="fa fa-chevron-left"></i> matplotlib绘制图像注意力
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/TCMalloc-Go%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%8E%9F%E7%90%86/" rel="next" title="TCMalloc - Go的内存分配原理">
+                  TCMalloc - Go的内存分配原理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"b2c9a5000a9144c7fc70f5e4ccf77f7e"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

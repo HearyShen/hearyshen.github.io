@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="参考AAAI 2020的Tutorial——Graph Neural Networks: Models and Applications以及一些资料来读论文，学习图神经网络领域知识。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GNNs - 图神经网络学习笔记">
+<meta property="og:url" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="参考AAAI 2020的Tutorial——Graph Neural Networks: Models and Applications以及一些资料来读论文，学习图神经网络领域知识。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_signal.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_fourier_transform.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/inverse_graph_fourier_transform.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering_and_pooling.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_pooling.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering_studies.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/eigenvalue_and_eigenvector.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_spectral_filter_for_multichannel.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/minimax_and_chebyshev_polynomial.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_convolutional_network.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/GCN_propagation_comparison_table.png">
+<meta property="og:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/GCN_classification_accuracy_summary.png">
+<meta property="article:published_time" content="2020-03-08T15:17:07.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.588Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Papers">
+<meta property="article:tag" content="Deep Learning">
+<meta property="article:tag" content="GNN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph.png">
+
+
+<link rel="canonical" href="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/","path":"posts/GNNs-图神经网络学习笔记/","title":"GNNs - 图神经网络学习笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>GNNs - 图神经网络学习笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gnns---%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0"><span class="nav-text">GNNs - 图神经网络学习笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-text">0 链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A0%94%E7%A9%B6%E8%83%8C%E6%99%AF"><span class="nav-text">1 研究背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80"><span class="nav-text">2 理论基础</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%AE%BA"><span class="nav-text">2.1 基本图论</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E5%92%8C%E5%9B%BE%E4%BF%A1%E5%8F%B7"><span class="nav-text">2.1.1 图和图信号</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9B%BE"><span class="nav-text">图</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9B%BE%E4%BF%A1%E5%8F%B7"><span class="nav-text">图信号</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E7%9A%84%E7%9F%A9%E9%98%B5%E8%A1%A8%E7%A4%BA"><span class="nav-text">2.1.2 图的矩阵表示</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%BA%A6%E7%9F%A9%E9%98%B5"><span class="nav-text">度矩阵</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%82%BB%E6%8E%A5%E7%9F%A9%E9%98%B5"><span class="nav-text">邻接矩阵</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E7%9F%A9%E9%98%B5"><span class="nav-text">拉普拉斯矩阵</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%B1%E5%9B%BE%E7%90%86%E8%AE%BA"><span class="nav-text">2.2 谱图理论</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BE%E5%82%85%E9%87%8C%E5%8F%B6%E5%88%86%E6%9E%90"><span class="nav-text">2.3 图傅里叶分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E4%BF%A1%E5%8F%B7%E7%9A%84%E5%82%85%E9%87%8C%E5%8F%B6%E5%88%86%E8%A7%A3"><span class="nav-text">2.3.1 图信号的傅里叶分解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E5%82%85%E9%87%8C%E5%8F%B6%E5%8F%98%E6%8D%A2"><span class="nav-text">2.3.2 图傅里叶变换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%86%E5%9B%BE%E5%82%85%E9%87%8C%E5%8F%B6%E5%8F%98%E6%8D%A2"><span class="nav-text">2.3.3 逆图傅里叶变换</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B"><span class="nav-text">3 模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-text">3.1 概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gnn%E4%B8%AD%E7%9A%84%E6%BB%A4%E6%B3%A2"><span class="nav-text">3.2 GNN中的滤波</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%91%E5%9F%9F%E6%BB%A4%E6%B3%A2"><span class="nav-text">3.2.1 频域滤波</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A9%BA%E5%9F%9F%E6%BB%A4%E6%B3%A2"><span class="nav-text">3.2.2 空域滤波</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E6%A8%A1%E5%9E%8B"><span class="nav-text">3.2.3 具体模型</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#gnn"><span class="nav-text">3.2.3.1 GNN</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#spectral-graph-cnn"><span class="nav-text">3.2.3.2 Spectral Graph CNN</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#chebnet"><span class="nav-text">3.2.3.3 ChebNet</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gcn"><span class="nav-text">3.2.3.4 GCN</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#graphsage"><span class="nav-text">3.2.3.5 GraphSage</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gat"><span class="nav-text">3.2.3.6 GAT</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#mpnn"><span class="nav-text">3.2.3.7 MPNN</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gnn%E4%B8%AD%E7%9A%84%E6%B1%A0%E5%8C%96"><span class="nav-text">3.3 GNN中的池化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#gpool"><span class="nav-text">3.3.1 gPool</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#diffpool"><span class="nav-text">3.3.2 DiffPool</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#eigenpooling"><span class="nav-text">3.3.3 Eigenpooling</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gnn%E7%9A%84%E9%B2%81%E6%A3%92%E6%80%A7"><span class="nav-text">3.4 GNN的鲁棒性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gnn%E7%9A%84%E6%89%A9%E5%B1%95%E5%AD%A6%E4%B9%A0"><span class="nav-text">3.5 GNN的扩展学习</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8"><span class="nav-text">4 应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%BB%E7%96%97%E4%BF%9D%E5%81%A5"><span class="nav-text">4.1 医疗保健</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86"><span class="nav-text">4.2 自然语言处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F"><span class="nav-text">4.3 推荐系统</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="GNNs - 图神经网络学习笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          GNNs - 图神经网络学习笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-03-08 23:17:07" itemprop="dateCreated datePublished" datetime="2020-03-08T23:17:07+08:00">2020-03-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>17k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>16 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>参考AAAI 2020的Tutorial——<a
+target="_blank" rel="noopener" href="http://cse.msu.edu/~mayao4/tutorials/aaai2020/">Graph Neural
+Networks: Models and
+Applications</a>以及一些资料来读论文，学习图神经网络领域知识。</p>
+<span id="more"></span>
+<h1 id="gnns---图神经网络学习笔记">GNNs - 图神经网络学习笔记</h1>
+<h2 id="链接">0 链接</h2>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://cse.msu.edu/~mayao4/tutorials/aaai2020/">Graph Neural
+Networks: Models and Applications</a>, AAAI 2020 Tutorial</p>
+</blockquote>
+<h2 id="研究背景">1 研究背景</h2>
+<p>相当多的数据是图/图谱（graph）结构的，如：</p>
+<ul>
+<li>社交图谱；</li>
+<li>传输图谱；</li>
+<li>大脑图谱；</li>
+<li>网页图谱；</li>
+<li>分子图谱；</li>
+<li>基因图谱。</li>
+</ul>
+<p>一系列的实际问题都需要对图谱进行处理、特征提取和表征，例如：</p>
+<ul>
+<li>链路预测；</li>
+<li>节点分类；</li>
+<li>社区检测；</li>
+<li>（网页）排序。</li>
+</ul>
+<p>传统的深度学习方法所能处理的数据都是简单网格或序列，例如：</p>
+<ul>
+<li>通过CNNs处理固定尺寸的图像/网格；</li>
+<li>通过RNNs处理文本/序列。</li>
+</ul>
+<p>然而图谱是由节点和边组成的，其形式是多变的：</p>
+<ul>
+<li>各个节点的邻域节点数量各不相同；</li>
+<li>图谱有着复杂的拓扑结构；</li>
+<li>图谱也不存在固定的节点序列。</li>
+</ul>
+<p>因此，图神经网络（Graph Neural Networks）被提出以解决这些问题。</p>
+<h2 id="理论基础">2 理论基础</h2>
+<h3 id="基本图论">2.1 基本图论</h3>
+<p><em>Basic Graph Theory</em></p>
+<h4 id="图和图信号">2.1.1 图和图信号</h4>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph.png" class="" title="graph">
+<h5 id="图">图</h5>
+<p>图（Graph）<span
+class="math inline">\(G\)</span>由节点（Vertices）集合<span
+class="math inline">\(V\)</span>和边（Edges）集合<span
+class="math inline">\(E\)</span>组成，形式化为： <span
+class="math display">\[
+V = \{v_1, ... v_N\}
+\]</span></p>
+<p><span class="math display">\[
+E = \{e_1, ... e_M\}
+\]</span></p>
+<p><span class="math display">\[
+G = \{V, E\}
+\]</span></p>
+<h5 id="图信号">图信号</h5>
+<p>那么，图信号（Graph Signal）可形式化为映射<span
+class="math inline">\(f\)</span>： <span class="math display">\[
+f: V \to \mathbb{R}^N
+\]</span></p>
+<p>或 <span class="math display">\[
+f: V \to \mathbb{R}^{N \times d}
+\]</span> 即，映射<span
+class="math inline">\(f\)</span>把每一个节点<span
+class="math inline">\(v\)</span>映射为一个<span
+class="math inline">\(d\)</span>维实数向量： <span
+class="math display">\[
+v \to [f(1), f(2), ... f(d)]^T
+\]</span></p>
+<h4 id="图的矩阵表示">2.1.2 图的矩阵表示</h4>
+<h5 id="度矩阵">度矩阵</h5>
+<p>度矩阵（Degree Matrix）： <span class="math display">\[
+D = diag(degree(v_1), ... degree(v_N))
+\]</span> 在此例中： <span class="math display">\[
+D =
+\begin{bmatrix}
+     1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 3 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 4 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 2 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 2 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 4 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 3 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+\end{bmatrix}
+\]</span></p>
+<h5 id="邻接矩阵">邻接矩阵</h5>
+<p>邻接矩阵（Adjacency Matrix）： <span class="math display">\[
+A[i,j] =
+\begin{cases}
+1&amp; v_i \in \mathcal{N}(v_j) \\
+0&amp; v_i \notin \mathcal{N}(v_j)
+\end{cases}
+\]</span> 在此例中：</p>
+<p><span class="math display">\[
+A =
+\begin{bmatrix}
+     0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     1 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
+     0 &amp; 1 &amp; 0 &amp; 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 \\
+     0 &amp; 0 &amp; 1 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
+     0 &amp; 1 &amp; 1 &amp; 0 &amp; 1 &amp; 0 &amp; 1 &amp; 0 \\
+     0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 1 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 \\
+\end{bmatrix}
+\]</span></p>
+<h5 id="拉普拉斯矩阵">拉普拉斯矩阵</h5>
+<p>拉普拉斯矩阵（Laplacian Matrix）： <span class="math display">\[
+L = D - A
+\]</span> 在此例中：</p>
+<p><span class="math display">\[
+L =
+\begin{bmatrix}
+     1 &amp; -1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     -1 &amp; 3 &amp; -1 &amp; 0 &amp; 0 &amp; -1 &amp; 0 &amp; 0 \\
+     0 &amp; -1 &amp; 4 &amp; -1 &amp; 0 &amp; -1 &amp; -1 &amp; 0 \\
+     0 &amp; 0 &amp; -1 &amp; 2 &amp; -1 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; -1 &amp; 2 &amp; -1 &amp; 0 &amp; 0 \\
+     0 &amp; -1 &amp; -1 &amp; 0 &amp; -1 &amp; 4 &amp; -1 &amp; 0 \\
+     0 &amp; 0 &amp; -1 &amp; 0 &amp; 0 &amp; -1 &amp; 3 &amp; -1 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; -1 &amp; 1 \\
+\end{bmatrix}
+\]</span></p>
+<h3 id="谱图理论">2.2 谱图理论</h3>
+<p><em>Spectral Graph Theory</em></p>
+<p>拉普拉斯矩阵可作为<strong>差分算子（difference
+operator）</strong>，即： <span class="math display">\[
+h = Lf = (D - A)f = Df - Af \in \mathbb{R}^{N \times d}
+\]</span></p>
+<p><span class="math display">\[
+h(i) = \sum_{v_j \in \mathcal{N}(v_i)}(f(i) - f(j)) \in \mathbb{R}^d
+\]</span></p>
+<p>可以理解为节点<span
+class="math inline">\(i\)</span>与邻接节点的一阶距离之和。</p>
+<p><strong>拉普拉斯二次型（Laplacian quadratic
+form）</strong>可以表达图信号<span
+class="math inline">\(f\)</span>的“平滑程度”（smoothness）或“频率”（frequency）：
+<span class="math display">\[
+f^TLf = \frac{1}{2} \sum_{i,j=0}^{N-1} A[i,j] (f(i)-f(j))^2
+\]</span> &gt; 公式推导可参考：<a
+target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/81502804">谱聚类方法推导和对拉普拉斯矩阵的理解</a></p>
+<p>可以理解为每对邻接节点之间信号的二阶距离。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_signal.png" class="" title="Graph Signal">
+<ul>
+<li>低频和高频图谱信号；</li>
+<li>低频图信号中，每个图节点的信号接近，意味着图信号变化平缓，即周期长，在频域中低频多，高频少；</li>
+<li>高频图信号中，每个图节点的信号相差较大，意味着图信号变化剧烈、频繁，即周期短，在频域中，高频多，低频少。</li>
+</ul>
+<p>拉普拉斯矩阵是一个实对称半正定矩阵（a real symmetric positive
+semidefinite matrix），所以拉普拉斯矩阵满足：</p>
+<ul>
+<li>一定有<span
+class="math inline">\(N\)</span>个线性无关的特征向量；</li>
+<li>特征值一定非负；</li>
+<li>特征向量相互正交（特征向量组成的矩阵为正交矩阵）。</li>
+</ul>
+<p>因为特征向量组成的矩阵为正交阵，所以满足：<span
+class="math inline">\(U^T =
+U^{-1}\)</span>。因此，特征值与特征向量的公式<span
+class="math inline">\(L u_i = \lambda_i u_i\)</span>的矩阵形式 <span
+class="math inline">\(L U = U \Lambda\)</span>可以转换为： <span
+class="math inline">\(L=U \Lambda U^{-1} = U \Lambda
+U^T\)</span>，即拉普拉斯矩阵的特征分解。</p>
+<p>通过拉普拉斯矩阵的特征分解（Eigen-decomposition of Laplacian
+Matrix），拉普拉斯矩阵具有一个完整的正交特征向量集合<span
+class="math inline">\(U \in \mathbb{R}^{N \times
+N}\)</span>和特征值对角矩阵 <span class="math inline">\(\Lambda \in
+\mathbb{R}^{N \times N}\)</span> ： <span class="math display">\[
+L = U \Lambda U^T =
+\begin{bmatrix}
+     u_0 &amp; ... &amp; u_{N-1}
+\end{bmatrix}
+\begin{bmatrix}
+     \lambda_0 &amp; &amp; 0 \\
+     &amp; \ddots \\
+     0 &amp; &amp; \lambda_{N-1} \\
+\end{bmatrix}
+\begin{bmatrix}
+     u_0^T \\
+     \vdots \\
+     u_{N-1}^T
+\end{bmatrix}
+\]</span></p>
+<p>拉普拉斯矩阵的<span
+class="math inline">\(N\)</span>个非负实数特征值，满足非递减性质： <span
+class="math display">\[
+0 = \lambda_0 &lt; \lambda_1 \le ... \lambda_{N-1}
+\]</span></p>
+<p>拉普拉斯矩阵特征分解的<span
+class="math inline">\(N\)</span>个正交特征向量集合，即可作为该矩阵空间的正交基。每一个特征向量就代表一个基方向上的信号。把这个特征向量代入上述的计算信号频率的拉普拉斯二次型公式，正好可以推得特征向量的”频率“就是该特征向量对应的特征值：
+<span class="math display">\[
+f^T L f = u_i^T L u_i = u_i^T \lambda_i u_i = \lambda_i
+\]</span></p>
+<p>因此，在该特征分解中，特征向量<span class="math inline">\(u_i \in
+\mathbb{R}^N\)</span>对应的特征值<span
+class="math inline">\(\lambda_i\)</span>被称为 <span
+class="math inline">\(u_i\)</span> 的频率（frequency）。</p>
+<h3 id="图傅里叶分析">2.3 图傅里叶分析</h3>
+<p><em>Graph Fourier Analysis</em></p>
+<h4 id="图信号的傅里叶分解">2.3.1 图信号的傅里叶分解</h4>
+<p>信号<span class="math inline">\(f \in
+\mathbb{R}^N\)</span>可以通过图傅里叶级数（Fourier series）进行表示：
+<span class="math display">\[
+f = \sum_{i=0}^{N-1} \hat{f_i} \cdot u_i = \sum_{i=0}^{N-1} (u_i^T f)
+u_i
+\]</span> 其中，<span class="math inline">\(u_i \in
+\mathbb{R}^N\)</span>表示图傅里叶模式（Fourier
+mode），在图傅里叶变换中是图谱拉普拉斯矩阵的特征向量；<span
+class="math inline">\(\hat{f_i} \in
+\mathbb{R}\)</span>表示图傅里叶系数（Fourier
+coefficient），通过图傅里叶变换取得。</p>
+<p>图信号的傅里叶分解指的是用<span
+class="math inline">\(N\)</span>个傅里叶模式向量，加权求和，表示图信号。</p>
+<h4 id="图傅里叶变换">2.3.2 图傅里叶变换</h4>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_fourier_transform.png" class="" title="Graph Fourier Transform, GFT">
+<p>图傅里叶变换（Graph Fourier Transform,
+GFT）指的是将图信号从空域（spatial domain）中的空域信号<span
+class="math inline">\(f\)</span>变换到频域（spectral
+domain）中的频域信号<span class="math inline">\(\hat{f} \in
+\mathbb{R}^N\)</span>： <span class="math display">\[
+\hat{f} = U^T f = [u_0^Tf, u_1^Tf, ... u_{N-1}^Tf]^T
+\]</span></p>
+<p>其中，<span class="math inline">\(\lambda_l \in
+\mathbb{R}\)</span>表示频率，<span class="math inline">\(n\in[1,
+N]\)</span>表示图节点。</p>
+<p>频域信号<span
+class="math inline">\(\hat{f}\)</span>实际上是傅里叶模式的权重，例如：<span
+class="math inline">\(\hat{f_i} \in \mathbb{R}\)</span>是傅里叶模式<span
+class="math inline">\(u_i\)</span>对应的权重，称为傅里叶系数。在此处的公式中，该傅里叶系数的计算原理实际上就是内积距离（相似度），即：<span
+class="math inline">\(\hat{f_i} = u_i^T f\)</span>，傅里叶系数 <span
+class="math inline">\(\hat{f_i}\)</span>实际上是傅里叶模式<span
+class="math inline">\(u_i\)</span>与空域信号<span
+class="math inline">\(f\)</span>之间的相似度。</p>
+<p><strong>小结</strong>：图傅里叶变换将图信号<span
+class="math inline">\(f\)</span>转换为了正交基<span
+class="math inline">\(U=[u_1, u_2, ...
+u_N]\)</span>上的一组权重系数<span
+class="math inline">\(\hat{f}=[\hat{f_1}, \hat{f_2}, ...
+\hat{f_N}]\)</span>。</p>
+<h4 id="逆图傅里叶变换">2.3.3 逆图傅里叶变换</h4>
+<p>既然图信号<span
+class="math inline">\(f\)</span>能够通过正交基上的一组权重系数进行表示，那么通过这组系数重新对正交基加权求和，显然可以逆变换回去，还原出空域的图信号<span
+class="math inline">\(f\)</span>。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/inverse_graph_fourier_transform.png" class="" title="Inverse Graph Fourier Transform, IGFT">
+<p>逆图傅里叶变换（Inverse Graph Fourier Transform,
+IGFT）指的是将图信号从频域<span
+class="math inline">\(\hat{f}\)</span>变换回空域<span
+class="math inline">\(f\)</span>： <span class="math display">\[
+\begin{equation}
+\begin{split}
+f &amp; = U\hat{f} \\
+&amp; =
+[u_0, u_1, ... u_{N-1}]
+\begin{bmatrix}
+     \hat{f_0} \\
+     \hat{f_1} \\
+     \vdots \\
+     \hat{f_{N-1}}
+\end{bmatrix} \\
+&amp; = [u_0 \hat{f_0}, u_1 \hat{f_1}, ... u_{N-1} \hat{f_{N-1}}] \\
+&amp; = \sum_{i=0}^{N-1} u_i \hat{f_i}
+\end{split}
+\end{equation}
+\]</span></p>
+<p><strong>小结</strong>：逆图傅里叶变换以<span
+class="math inline">\(\hat{f}\)</span>作为正交基<span
+class="math inline">\(U\)</span>上的权重系数对正交基向量进行加权求和，变回了原始空域信号<span
+class="math inline">\(f\)</span>。</p>
+<h2 id="模型">3 模型</h2>
+<h3 id="概述">3.1 概述</h3>
+<p>图神经网络的目的在于解决图结构数据上的问题，而图结构数据的研究问题可分为两类：</p>
+<ol type="1">
+<li>节点级（Node-level）：链路预测、节点分类等；</li>
+<li>图谱级（Graph-level）：图谱分类等。</li>
+</ol>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering_and_pooling.png" class="" title="Graph Filtering and Pooling">
+<p>相应地，图神经网络模型中主要包含两类操作：</p>
+<ol type="1">
+<li>滤波（Filtering）：取得节点表征（Node
+Representation），用于解决节点级任务；</li>
+<li>池化（Pooling）：降维取得图谱表征（Graph
+Representation），用于解决图谱级任务。</li>
+</ol>
+<p>当然，在神经网络中还需要包含必要的激活（Activation）操作。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering.png" class="" title="Graph Filtering">
+<p>图滤波操作不改变图结构和节点数量，而是对图节点的特征向量进行变换，起到优化节点特征的作用。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_pooling.png" class="" title="Graph Pooling">
+<p>图池化操作会改变图结构和节点数量，池化操作减少了图中的节点数量，生成了一个更小的图，通常也伴随着特征向量的变换。</p>
+<h3 id="gnn中的滤波">3.2 GNN中的滤波</h3>
+<p>图神经网络模型的研究主要关注于图神经网络中的滤波操作。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_filtering_studies.png" class="" title="Graph Filtering Studies">
+<p>图卷积操作主要分为两类：</p>
+<ul>
+<li>频域GNN（<em>Spectral-based GNN</em>)</li>
+<li>空域GNN（<em>Spatial-based GNN</em>）</li>
+</ul>
+<h4 id="频域滤波">3.2.1 频域滤波</h4>
+<p>首先，理解矩阵特征值与特征向量。</p>
+<p>从Interactive Linear Algebra一书中，给出了清晰的可视化解释，</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/eigenvalue_and_eigenvector.png" class="" title="Eigenvalue and eigenvector">
+<p>不难看出，<span class="math inline">\(Av=\lambda
+v\)</span>体现的意义是，<span class="math inline">\(Av\)</span>是和<span
+class="math inline">\(v\)</span>的同方向向量，长度是<span
+class="math inline">\(v\)</span>的<span
+class="math inline">\(\lambda\)</span>倍。因此，特征向量<span
+class="math inline">\(v\)</span>是<span
+class="math inline">\(A\)</span>空间中的一个方向分量，而<span
+class="math inline">\(\lambda\)</span>则体现了该方向向量<span
+class="math inline">\(v\)</span>的在变换矩阵<span
+class="math inline">\(A\)</span>中的重要性、权重。</p>
+<p>具体地，在GNN频域滤波的语境中，基于谱图理论中拉普拉斯二次型的计算，特征值<span
+class="math inline">\(\lambda_i\)</span>被解释为相应特征向量<span
+class="math inline">\(v_i\)</span>的“频率”（frequency）。</p>
+<p>因为拉普拉斯矩阵既可以表示图（graph）的特征（包含节点的度和邻接关系），又是实对称矩阵能够具备良好的特征分解性质，因此把图通过拉普拉斯矩阵进行表示。在拉普拉斯矩阵的特征分解<span
+class="math inline">\(L=U\Lambda
+U^T\)</span>中，取得了特征向量组成的正交基<span
+class="math inline">\(U=[u_1, u_2, ... u_N] \in \mathbb{R}^{N \times
+N}\)</span>和特征值组成的对角矩阵<span class="math inline">\(\Lambda =
+diag(\lambda_1, \lambda_2, ... \lambda_N)\)</span>。</p>
+<p>其中，对应特征值小，即“不重要”/“权重低”的特征向量被解释为“低频分量”，该特征向量表示的信号分量与整体信号相关性小，因此相邻节点之间，该信号分量波动不大，比较平滑，记录的是图中笼统的信息（信号整体的高低）；而对应特征值大，即“重要”/“权重高”的特征向量被解释为“高频分量”，该特征向量表示的信号分量与信号波动的相关性高，因此相邻节点之间，该信号分量波动大，相对也就不平滑，记录的是图中细节的信息（节点之间的信号波动差异）。</p>
+<p>所谓频域滤波，就是根据频率决定是保留还是滤除该分量。例如：高通滤波（high-pass）就是滤除低频分量，通过高频分量；低通滤波（low-pass）就是滤除高频分量，通过低频分量。</p>
+<p>具体地，在GNN的频域滤波语境中，滤波器就可以形式化为： <span
+class="math display">\[
+\hat{g}(\lambda_i) \in \mathbb{R}
+\]</span> 表示输入代表频率的特征值<span
+class="math inline">\(\lambda_i\)</span>，根据该输入，输出滤波后的权重。</p>
+<p>例如，高通滤波就可以通过以下示例来表述： <span
+class="math display">\[
+\hat{g}(\lambda) =
+\begin{cases}
+1&amp; \lambda \ge threshold \\
+0&amp; \lambda &lt; threshold
+\end{cases}
+\]</span> 整体来看，对正交基<span
+class="math inline">\(U\)</span>中的特征向量<span
+class="math inline">\(u_i\)</span>，频域滤波的全过程形式化为： <span
+class="math display">\[
+f_i^{(filtered)} = u_i \hat{g}(\lambda_i) u_i^T f
+\]</span> 对所有信号<span class="math inline">\(f \in
+\mathbb{R}^N\)</span>，频域滤波的矩阵形式化为： <span
+class="math display">\[
+\begin{equation}
+\begin{split}
+f^{(filtered)} &amp; = U \hat{g}(\Lambda) U^T f \\
+&amp; =
+\begin{bmatrix}
+     u_0 &amp; ... &amp; u_{N-1}
+\end{bmatrix}
+\begin{bmatrix}
+     \hat{g}(\lambda_0) &amp; &amp; 0 \\
+     &amp; \ddots \\
+     0 &amp; &amp; \hat{g}(\lambda_{N-1}) \\
+\end{bmatrix}
+\begin{bmatrix}
+     u_0^T \\
+     \vdots \\
+     u_{N-1}^T
+\end{bmatrix}
+f \\
+&amp; =
+\begin{bmatrix}
+     u_0 &amp; ... &amp; u_{N-1}
+\end{bmatrix}
+\begin{bmatrix}
+     \hat{g}(\lambda_0) &amp; &amp; 0 \\
+     &amp; \ddots \\
+     0 &amp; &amp; \hat{g}(\lambda_{N-1}) \\
+\end{bmatrix}
+\begin{bmatrix}
+     \hat{f_0} \\
+     \vdots \\
+     \hat{f}_{N-1}
+\end{bmatrix} \\
+&amp; =
+\begin{bmatrix}
+     u_0 &amp; ... &amp; u_{N-1}
+\end{bmatrix}
+\begin{bmatrix}
+     \hat{g}(\lambda_0) \hat{f_0} \\
+     \vdots \\
+     \hat{g}(\lambda_{N-1}) \hat{f}_{N-1} \\
+\end{bmatrix} \\
+&amp; =
+u_0 \hat{g}(\lambda_0) \hat{f_0} + ... + u_{N-1} \hat{g}(\lambda_{N-1})
+\hat{f}_{N-1} \\
+&amp; =
+\sum_{i=0}^{N-1}u_i \hat{g}(\lambda_i) \hat{f_i}
+\end{split}
+\end{equation}
+\]</span> 输出的滤波后的信号为<span class="math inline">\(f^{(filtered)}
+\in \mathbb{R}^N\)</span>。</p>
+<p>根据矩阵乘法的计算顺序，从右往左依次为：</p>
+<ol type="1">
+<li><strong>傅里叶变换</strong>：对信号 <span
+class="math inline">\(f\)</span> 进行傅里叶变换，取得相应于傅里叶模式
+<span class="math inline">\(u_i\)</span> 的傅里叶系数 <span
+class="math inline">\(\hat{f_i} = u_i^T f\)</span> （或 <span
+class="math inline">\(\hat{f} = U^T f\)</span> ）；</li>
+<li><strong>滤波</strong>：傅里叶变换得到了傅里叶模式 <span
+class="math inline">\(u_i\)</span> 的傅里叶系数 <span
+class="math inline">\(\hat{f_i}\)</span>
+，那该傅里叶模式（即特征向量）是不是我们想要保留的呢？通过滤波，就可以根据该傅里叶模式（即特征向量）对应的频率（即特征值）进行滤波
+<span class="math inline">\(\hat{g}(\lambda_i) u_i^T f\)</span>（或<span
+class="math inline">\(\hat{g}(\Lambda) U^T f\)</span>）；</li>
+<li><strong>逆傅里叶变换</strong>：将滤波过的傅里叶系数 <span
+class="math inline">\(\hat{g}(\lambda_i) \hat{f_i}\)</span>
+乘以对应的傅里叶分量（特征向量）<span
+class="math inline">\(u_i\)</span>，逆傅里叶变换为滤波过的空域信号<span
+class="math inline">\(f_i^{(filtered)}\)</span>（或<span
+class="math inline">\(f^{(filtered)}\)</span>）。</li>
+</ol>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_spectral_filter_for_multichannel.png" class="" title="Graph Spectral Filter for Multi-channel">
+<p><strong>推广</strong>：推广到多通道信号的情况，每个节点信号均为<span
+class="math inline">\(d_1\)</span>维向量（通道）的<span
+class="math inline">\(N\)</span>个节点的图谱，即输入的空域图谱信号<span
+class="math inline">\(f \in \mathbb{R}^{N \times
+d_1}\)</span>，频域滤波类似地可形式化为： <span class="math display">\[
+f^{(filtered)} = U
+\begin{bmatrix}
+\sum_{i=1}^{d_1} \hat{g_{i,1}}(\Lambda) U^T f_{:,i} &amp; \dots &amp;
+\sum_{i=1}^{d_1} \hat{g_{i,d_2}}(\Lambda) U^T f_{:,{i}}
+\end{bmatrix}
+\]</span> 输出的滤波后的信号为<span class="math inline">\(f^{(filtered)}
+\in \mathbb{R}^{N \times
+d_2}\)</span>。也就是说，频域滤波不仅对信号进行了滤波，还可以调整输出的每个节点的信号维度（<span
+class="math inline">\(\mathbb{R}^{N\times d_1} \to \mathbb{R}^{ N \times
+d_2}\)</span>）。</p>
+<p><strong>分析滤波器参数规模</strong>：不难发现，从一个通道到另一个通道的频域滤波（即上图的一个箭头）对应一个滤波器。那么，从<span
+class="math inline">\(d_1\)</span>个通道到<span
+class="math inline">\(d_2\)</span>个通道的滤波变换，就需要有<span
+class="math inline">\(d_1 \times d_2\)</span>个滤波器<span
+class="math inline">\(\hat{g}(\Lambda)\)</span>，每个滤波器为对角阵，包含<span
+class="math inline">\(N\)</span>个参数。因此，该频域滤波的滤波器参数规模为<span
+class="math inline">\(d_1 \times d_2 \times N\)</span>。</p>
+<h4 id="空域滤波">3.2.2 空域滤波</h4>
+<p>空域滤波的概念比较符合人的直觉，就是以节点在空域中的邻接节点作为其邻域，对该邻域做加权求和（卷积）即可。基于邻域的空域滤波可形式化为：
+<span class="math display">\[
+f_j^{(filtered)} = \sum_{i=0}^{N-1} F_{i,j} f_i
+\]</span> 遍历节点<span
+class="math inline">\(j\)</span>的邻域，对领域中的的每一个节点<span
+class="math inline">\(i\)</span>，都通过空域滤波器<span
+class="math inline">\(F \in \mathbb{R}^{N \times
+N}\)</span>来对节点<span
+class="math inline">\(i\)</span>的信号进行滤波。通过对邻域内的所有节点信号进行滤波加权平均，取得节点<span
+class="math inline">\(j\)</span>的空域滤波结果。</p>
+<p>对滤波结果，往往通过激活函数进行非线性变换，以及通过池化进行进一步处理，形式化为：
+<span class="math display">\[
+f_j^{pooled} = pooling(activation(f_j^{(filtered)}))
+\]</span></p>
+<h4 id="具体模型">3.2.3 具体模型</h4>
+<h5 id="gnn">3.2.3.1 GNN</h5>
+<p>【空域滤波】</p>
+<blockquote>
+<p>Scarselli F, Tsoi A C, Gori M, et al. Graphical-based learning
+environments for pattern recognition[C]//Joint IAPR International
+Workshops on Statistical Techniques in Pattern Recognition (SPR) and
+Structural and Syntactic Pattern Recognition (SSPR). Springer, Berlin,
+Heidelberg, 2004: 42-56.</p>
+</blockquote>
+<p>图神经网络的概念最早由Franco Scarselli等人于2004年提出。</p>
+<p>Scarselli等人在后续的论文中又反复研究了图神经网络的理论及应用。</p>
+<blockquote>
+<p>Scarselli F, Yong S L, Gori M, et al. Graph neural networks for
+ranking web pages[C]//The 2005 IEEE/WIC/ACM International Conference on
+Web Intelligence (WI'05). IEEE, 2005: 666-672.</p>
+</blockquote>
+<blockquote>
+<p>Scarselli F, Gori M, Tsoi A C, et al. The graph neural network
+model[J]. IEEE Transactions on Neural Networks, 2008, 20(1): 61-80.</p>
+</blockquote>
+<p>首次提出的GNN将graph映射到一个实数向量，具体分两种： 1.
+graph-focused: 关注图结构，而无视涉及到的节点属性； 2. node-focused:
+根据节点属性将图映射到向量。</p>
+<p>最早的GNN的核心思想是，用一个实数向量<span
+class="math inline">\(x_n\)</span>来表示节点<span
+class="math inline">\(n\)</span>的状态（state）。</p>
+<p>该状态向量<span
+class="math inline">\(x_n\)</span>取决于其领域中的信息，包含： 1. <span
+class="math inline">\(n\)</span>的标签； 2. <span
+class="math inline">\(n\)</span>的连接边的标签； 3. <span
+class="math inline">\(n\)</span>的邻居节点的状态向量和标签。</p>
+<p>具体计算公式为： <span class="math display">\[
+x_n = \sum_{u\in ne[n]} h_w(l_n, x_u, l_u), n\in N.
+\]</span> 在该式中，节点<span
+class="math inline">\(n\)</span>的状态取决于： 1. <span
+class="math inline">\(l_n\)</span>，节点<span
+class="math inline">\(n\)</span>的标签（Label）； 2. <span
+class="math inline">\(x_u\)</span>，邻居节点<span
+class="math inline">\(u\)</span>的状态； 3. <span
+class="math inline">\(l_u\)</span>，邻居节点<span
+class="math inline">\(u\)</span>的标签。</p>
+<p>显然，节点<span
+class="math inline">\(n\)</span>的状态是通过对节点自身以及邻域节点的信息进行滤波取得的，属于空域滤波。</p>
+<h5 id="spectral-graph-cnn">3.2.3.2 Spectral Graph CNN</h5>
+<p>【频域滤波】</p>
+<blockquote>
+<p>Bruna J, Zaremba W, Szlam A, et al. Spectral networks and locally
+connected networks on graphs[J]. arXiv preprint arXiv:1312.6203,
+2013.</p>
+</blockquote>
+<p>这篇论文主要研究如何把CNN用到图谱的处理上去。可以理解为这是第一代的GCN。</p>
+<p>可以说是GCN的早期研究。论文给出了两种滤波方式，分别对应空域滤波和频域滤波。</p>
+<p>论文写的在我看来写得比较晦涩，而且公式琢磨着总感觉有小错误，原理可以参考上述3.2.1和3.2.2分别介绍的频域滤波和空域滤波，是一致的。</p>
+<p>在这篇论文中，滤波器就是简单地套上了拉普拉斯矩阵的特征值（加了层非线性变换激活函数），作为初代设计，比较简单粗暴，仅仅使用参数<span
+class="math inline">\(\theta\)</span>来近似滤波器函数： <span
+class="math display">\[
+\hat{g}(\Lambda) = diag(\hat{g}(\lambda_0), ..., \hat{g}(\lambda_{N-1}))
+= diag(\theta_0, ..., \theta_{N-1})
+\]</span> 展开表示，就是： <span class="math display">\[
+\hat{g}(\Lambda) =
+\begin{bmatrix}
+\hat{g}(\lambda_0) &amp; &amp; 0 \\
+&amp; \ddots &amp; \\
+0 &amp; &amp; \hat{g}(\lambda_{N-1})\\
+\end{bmatrix} =
+\begin{bmatrix}
+\theta_0 &amp; &amp; 0 \\
+&amp; \ddots &amp; \\
+0 &amp; &amp; \theta_{N-1} \\
+\end{bmatrix}
+\]</span> 此处的<span class="math inline">\(\theta \in
+\mathbb{R}^{N}\)</span>是模型的可学习参数。</p>
+<p>这种滤波器设计相当于是为每一个节点都计算一个频域滤波值。</p>
+<p>不难看出，每个滤波器（卷积核）包含<span
+class="math inline">\(N\)</span>个参数<span class="math inline">\(\theta
+\in \mathbb{R}^N\)</span>，这个<span
+class="math inline">\(N\)</span>取决于数据规模，一旦节点规模很大，滤波器的参数量就会跟着很大。如果要实现输入<span
+class="math inline">\(f_{in} \in \mathbb{R}^{N \times
+d_1}\)</span>到<span class="math inline">\(f_{out} \in \mathbb{R}^{N
+\times d_2}\)</span>的频域滤波，就需要<span class="math inline">\(d_1
+\times d_2 \times N\)</span>的滤波器参数规模。</p>
+<p><strong>缺陷</strong>：</p>
+<p>1.滤波函数<strong>近似效果差</strong>；</p>
+<p>2.滤波器完全依赖于训练时的图谱，<strong>无法迁移变通</strong>，每一个滤波值都是和对应节点绑定的；</p>
+<p>3.模型<strong>参数规模庞大</strong>，因为一个图谱的节点数量<span
+class="math inline">\(N\)</span>往往是很大的。</p>
+<h5 id="chebnet">3.2.3.3 ChebNet</h5>
+<p>【频域滤波】</p>
+<blockquote>
+<p>Defferrard M, Bresson X, Vandergheynst P. Convolutional neural
+networks on graphs with fast localized spectral filtering[C]//Advances
+in neural information processing systems. 2016: 3844-3852.</p>
+</blockquote>
+<p>这篇论文主要研究在把CNN用到图谱的频域滤波的基础之上，如何改进滤波器的设计。可以理解为这是第二代的GCN。</p>
+<p>ChebNet中，首先定义使用的拉普拉斯矩阵不再是基本的<span
+class="math inline">\(L=D-A\)</span>，而是规格化（normalized）拉普拉斯矩阵，即：<span
+class="math inline">\(L = I_N - D^{-1/2} A D^{-1/2}\)</span>。</p>
+<p><strong>使用多项式函数近似滤波器函数</strong></p>
+<p>所谓多项式（<span class="math inline">\(K\)</span>阶），就是： <span
+class="math display">\[
+p_k(x) = \sum_{k=0}^K \theta_k x^k
+= \theta_0 + \theta_1 x + \theta_2 x^2 + \dots + \theta_K x^K
+\]</span> 通过多项式来近似滤波器，作为滤波器，形式化表示为： <span
+class="math display">\[
+\hat{g}(\Lambda) =
+\sum_{k=0}^{K-1} \theta_k \Lambda^k
+=
+\begin{bmatrix}
+\sum_{k=0}^{K-1} \theta_k \lambda_0^k &amp; &amp; 0 \\
+&amp; \ddots &amp; \\
+0 &amp; &amp; \sum_{k=0}^{K-1} \theta_k \lambda_{N-1}^k\\
+\end{bmatrix}
+\]</span> 由于通过多项式函数来近似滤波器，参数就只有<span
+class="math inline">\(K\)</span>个，即<span
+class="math inline">\([\theta_0, ... ,
+\theta_{K-1}]\)</span>，在模型训练过程中被优化。这意味着卷积核（滤波器）的参数规模不再受数据规模<span
+class="math inline">\(N\)</span>影响。每个滤波器<span
+class="math inline">\(K\)</span>个参数，意味着从<span
+class="math inline">\(d_1\)</span>个通道到<span
+class="math inline">\(d_2\)</span>个通道的滤波映射，需要<span
+class="math inline">\(d_1 \times d_2 \times
+K\)</span>的参数规模。在实践中，相较于<span class="math inline">\(d_1
+\times d_2 \times
+N\)</span>是大大减小了。而且，滤波器参数与节点数量<span
+class="math inline">\(N\)</span>脱钩，还使得训练出的滤波器，使用上不再仅限于当前图谱，而是可适应图谱节点数量、图谱结构的变化。</p>
+<p>而且巧的是，使用这个滤波器来滤波傅里叶变换的频域信号，特征值矩阵和特征向量矩阵相乘，刚好就还原了拉普拉斯矩阵（<span
+class="math inline">\(U \Lambda^k U^T =
+L^k\)</span>），也就是说——不需要再计算拉普拉斯矩阵特征分解了，一下子减少了计算代价。频域滤波过程推导如下：
+<span class="math display">\[
+U \hat{g}(\Lambda) U^T f
+= U \sum_{k=0}^{K-1} \theta_k \Lambda^k U^T f
+= \sum_{k=0}^{K-1} \theta_k L^k f
+\]</span> 解释一下，因为<span
+class="math inline">\(U\)</span>是正交阵，满足<span
+class="math inline">\(U^T = U^{-1}\)</span>，所以此处涉及的数学原理是：
+<span class="math display">\[
+U \Lambda^k U^T = (U \Lambda U^T)(U \Lambda U^T)\dots(U \Lambda U^T) =
+L^k
+\]</span>
+可见，对于多项式形式的滤波器，拉普拉斯矩阵的特征分解刚好被还原了，所以只需要计算拉普拉斯矩阵的幂就可以了。</p>
+<p>另外，拉普拉斯矩阵<span
+class="math inline">\(L\)</span>体现的是图节点之间的直接的邻接关系，而<span
+class="math inline">\(L^K\)</span>则体现了图节点之间的<span
+class="math inline">\(K\)</span>跳内的连通关系。因此，<span
+class="math inline">\(\sum_{k=0}^{K-1} \theta_k
+L^k\)</span>意味着计入了从1跳到K跳的节点间联通关系。这使得多项式参数滤波器能够准确地将滤波作用定位于半径为<span
+class="math inline">\(K\)</span>跳的邻域范围内。</p>
+<p><strong>使用切比雪夫多项式近似滤波器函数</strong></p>
+<p>以上解释了多项式滤波器相较于简单的参数滤波器的好处，ChebNet则是把一般多项式<span
+class="math inline">\(p_K(x) = \sum_{k=0}^{K-1}\theta_k
+x^k\)</span>替换为了切比雪夫多项式<span class="math inline">\(T_K(x) =
+\sum_{k=0}^{K-1} \theta_k T_k(x)\)</span>。</p>
+<p>在输入参数上，ChebNet对切比雪夫多项式<span
+class="math inline">\(T_k(x)\)</span>的输入参数<span
+class="math inline">\(x\)</span>进行了缩放（scale）处理。因为当<span
+class="math inline">\(x \in [-1,1]\)</span>时，切比雪夫多项式<span
+class="math inline">\(T_k(x)\)</span>满足三角函数表达式<span
+class="math inline">\(T_k(x) = \cos(k
+\arccos(x))\)</span>。这个数学性质使得切比雪夫多项式的值域能够稳定在上界为1，下界为-1的区间内，即使得<span
+class="math inline">\(T_k(x) \in [-1,1]\)</span>。</p>
+<blockquote>
+<p>数学参阅：2011 Wavelets on graphs via spectral graph theory</p>
+</blockquote>
+<p>具体地，在ChebNet中，切比雪夫多项式的输入参数<span
+class="math inline">\(\tilde{\Lambda}\)</span>是一个缩放对角阵： <span
+class="math display">\[
+\tilde{\Lambda} = \frac{2 \Lambda}{\lambda_{max}} - I_N
+\]</span> 该<span
+class="math inline">\(\tilde{\Lambda}\)</span>是对拉普拉斯特征值对角阵<span
+class="math inline">\(\Lambda\)</span>进行缩放的结果，将特征值从<span
+class="math inline">\([0,\lambda_{max}]\)</span>缩放至<span
+class="math inline">\([-1,1]\)</span>以满足上述性质。</p>
+<p>这样一来，滤波器<span
+class="math inline">\(\hat{g}(\Lambda)\)</span>被修改为<span
+class="math inline">\(\hat{g}(\tilde{\Lambda})\)</span>： <span
+class="math display">\[
+\hat{g}(\tilde{\Lambda}) =
+\sum_{k=0}^{K-1} \theta_k T_k(\tilde{\Lambda}) =
+\begin{bmatrix}
+\sum_{k=0}^{K-1} \theta_k T_k(\tilde{\lambda}_0) &amp; &amp; 0 \\
+&amp; \ddots &amp; \\
+0 &amp; &amp; \sum_{k=0}^{K-1} \theta_k T_k(\tilde{\lambda}_{N-1}) \\
+\end{bmatrix}
+\]</span></p>
+<p>其中，<span class="math inline">\(k\)</span>阶切比雪夫多项式<span
+class="math inline">\(T_k(x)\)</span>定义为： <span
+class="math display">\[
+T_k(x) = 2xT_{k-1}(x) - T_{k-2}(x)
+\]</span> 切比雪夫多项式是递归定义的多项式，它的初始项<span
+class="math inline">\(T_0 = 1\)</span>，<span class="math inline">\(T_1
+= x\)</span>。</p>
+<p>同样地，切比雪夫多项式虽然是递归定义的，但代入展开后也是一种多项式，也满足一般多项式所具备的省去矩阵特征分解的计算代价、K跳局部性的特性。</p>
+<p>将该滤波器代入频域滤波函数，可推得： <span class="math display">\[
+f^{(filtered)} = U \hat{g}(\tilde{\Lambda}) U^T f
+= U \sum_{k=0}^{K-1}\theta_k T_k(\tilde{\Lambda}) U^T f
+= \sum_{k=0}^{K-1}\theta_k T_k(\tilde{L}) f
+= \hat{g}(\tilde{L}) f
+\]</span> 其中，<span
+class="math inline">\(\tilde{L}\)</span>是对拉普拉斯矩阵的缩放结果：
+<span class="math display">\[
+\tilde{L} = \frac{2 L}{\lambda_{max}} - I_N
+\]</span></p>
+<p><strong>延伸问题：为什么要用切比雪夫多项式呢？</strong></p>
+<p>以下示例参阅：</p>
+<blockquote>
+<p>Hammond D K, Vandergheynst P, Gribonval R. Wavelets on graphs via
+spectral graph theory[J]. Applied and Computational Harmonic Analysis,
+2011, 30(2): 129-150.</p>
+</blockquote>
+<p>数学理论由来参阅：</p>
+<blockquote>
+<p>Geddes K O. Near-minimax polynomial approximation in an elliptical
+region[J]. SIAM Journal on Numerical Analysis, 1978, 15(6):
+1225-1233.</p>
+</blockquote>
+<p>涉及到数学层面的分析，大概的感性理解是，一般多项式在系数变化时，扰动大，而切比雪夫多项式更加抗扰动。尤其是目标函数变化比较平缓时，切比雪夫多项式要平缓的多，近似误差小得多。</p>
+<p>对<span class="math inline">\(f(x)\)</span>目标函数的<span
+class="math inline">\(n+2\)</span>个采样点<span
+class="math inline">\([x_1, x_2, \dots,
+x_{n+2}]\)</span>进行近似时，极小极大近似算法（<a
+target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Minimax_approximation_algorithm">minimax
+approximation algorithm</a>），典型代表如：<a
+target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Remez_algorithm"><strong>Remez
+algorithm</strong>（<strong>Remez exchange
+algorithm</strong>）</a>可以使得<span
+class="math inline">\(n\)</span>阶多项式<span
+class="math inline">\(P_n(x)=a_0 + a_1 x + a_2 x^2 + \dots + a_n
+x^n\)</span>对目标函数实现minimax近似（最小化最大误差，使<span
+class="math inline">\(n+2\)</span>个采样点的最大误差最小化），形式化为，解线性方程系统：
+<span class="math display">\[
+a_0 + a_1 x_i + a_2 x_i^2 + \dots + a_n x_i^n + (-1)^i E =
+f(x)\qquad(where\quad i=1,2,\dots,n+2)
+\]</span> 其中<span class="math display">\[a_0, a_1, \dots,
+a_n\]</span>是多项式<span
+class="math display">\[P_n(x)\]</span>的多项式系数。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/minimax_and_chebyshev_polynomial.png" class="" title="Minimax Polynomial vs. Truncated Chebyshev polynomial">
+<p>如图：</p>
+<ul>
+<li>左图(a)中，黑色表示目标函数，为小波核函数<span
+class="math inline">\(g(\lambda)\)</span>，蓝色表示截断切比雪夫展开式（truncated
+Chebyshev expansion），红色表示minimax多项式近似。</li>
+<li>右图(b)中，表示的是两个近似函数，即截断切比雪夫展开式和minimax多项式，与目标函数的近似误差。</li>
+</ul>
+<p>左图(a)中，近似函数与目标函数看起来“相交”的地方，就是采样点位置，经过近似计算，这些采样点的位置的近似误差很小。而采样点之外的地方，近似函数和目标函数可能高度拟合，也可能出现大幅震荡（参考数值计算中的“龙格现象（Runge
+phenomenon）”）。</p>
+<p>进一步查看右图(b)不难发现，以2011年这篇论文研究的小波核为例，截断切比雪夫展开式（蓝色）的最大误差只比真正的minimax多项式（红色）略大一点。但是，在目标函数变化比较平滑的部分，截断切比雪夫展开式的近似误差比minimax多项式的近似误差要低得多。因为其近似出的多项式函数更加平滑，不像minimax多项式那样频繁大幅震荡。</p>
+<h5 id="gcn">3.2.3.4 GCN</h5>
+<p>【频域滤波】</p>
+<blockquote>
+<p>Kipf T N, Welling M. Semi-supervised classification with graph
+convolutional networks[J]. arXiv preprint arXiv:1609.02907, 2016.</p>
+</blockquote>
+<p><strong>Graph Convolutional Network (GCN)</strong></p>
+<p>本文提出图卷积网络，实际上并不算是第一个图谱上的卷积网络。上述的Spectral
+Graph CNN和ChebNet等工作都是图卷积网络的研究工作。</p>
+<p>本文的GCN主要是对ChebNet进行了一系列简化和改进。</p>
+<p>简化改进的目的，是为了建立深层的神经网络，即，简化每一层的计算复杂度，从而让深层的图卷积成为可能。</p>
+<p>如上文所述，ChebNet通过切比雪夫多项式来近似滤波器函数<span
+class="math inline">\(\hat{g}(\Lambda)\)</span>，已经推得了： <span
+class="math display">\[
+f^{(filtered)} = U^T \hat{g}(\tilde{\Lambda}) U f
+= U^T \sum_{k=0}^{K}\theta_k T_k(\tilde{\Lambda}) U f
+= \sum_{k=0}^{K}\theta_k T_k(\tilde{L}) f
+= \hat{g}(\tilde{L}) f
+\]</span> 其中，<span class="math inline">\(\tilde{\Lambda} = \frac{2
+\Lambda}{\lambda_{max}} - I_N\)</span>，<span
+class="math inline">\(\tilde{L} = \frac{2 L}{\lambda_{max}} -
+I_N\)</span>。</p>
+<p>本文的GCN所作出的具体的改变为：</p>
+<p><strong>简化1：一阶切比雪夫多项式及系数约束</strong></p>
+<p>GCN将切比雪夫展开式限制为1阶，即<span
+class="math inline">\(K=1\)</span>，则滤波器函数表示为： <span
+class="math display">\[
+g(\lambda) = \sum_{k=0}^1 \theta_k T_k(\lambda)
+= \theta_0 T_0(\lambda) + \theta_1 T_1(\lambda)
+= \theta_0 + \theta_1 \lambda
+\]</span> 对于一阶切比雪夫多项式，GCN还增加了限制条件，限定<span
+class="math inline">\(\theta = \theta_0 = -
+\theta_1\)</span>，使参数只剩<span class="math inline">\(\theta \in
+\mathbb{R}\)</span>一项。滤波器函数表示为： <span
+class="math display">\[
+g(\lambda) = \theta - \theta \lambda = \theta(1 - \lambda)
+\]</span> <strong>简化2：特征值约束</strong></p>
+<p>GCN将特征值的最大值限定为2，即<span
+class="math inline">\(\lambda_{max} = 2\)</span>。</p>
+<p>这样的约束使得缩放拉普拉斯矩阵<span
+class="math inline">\(\tilde{L}\)</span>进一步简化为： <span
+class="math display">\[
+\tilde{L} = L - I_N = (I_N - D^{-1/2} A D^{-1/2}) - I_N = - D^{-1/2} A
+D^{-1/2}
+\]</span></p>
+<p>简化到这一步，基于以上限制条件，完整的滤波函数可推得： <span
+class="math display">\[
+f^{(filtered)} = \hat{g}(\tilde{L}) f
+= \theta (I_N - \tilde{L})
+= \theta (I_N + D^{-1/2} A D^{-1/2}) f
+\]</span> <strong>简化3：重规格化技巧</strong></p>
+<p>作者提出了一项重规格化技巧（renormalization
+trick），使得滤波计算进一步简化。该技巧形式化为： <span
+class="math display">\[
+I_N + D^{-1/2} A D^{-1/2} \to \tilde{D}^{-1/2} \tilde{A}
+\tilde{D}^{-1/2}
+\]</span> 其中，<span class="math inline">\(\tilde{A} = A +
+I_N\)</span>，度矩阵基于邻接矩阵计算，也改为<span
+class="math inline">\(\tilde{D}_{ii} = \sum_{j}
+\tilde{A}_{ij}\)</span>。</p>
+<p>经过该技巧的进一步简化，GCN每层的滤波函数就变为： <span
+class="math display">\[
+f^{(filtered)} = \hat{g}(\tilde{L}) f
+= \theta (I_N - \tilde{L})
+= \theta (I_N + D^{-1/2} A D^{-1/2}) f
+= \theta (\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2}) f
+\]</span> <strong>最终形式</strong></p>
+<p>GCN可以用于多通道的信号处理，对于从<span
+class="math inline">\(d_1\)</span>个通道的输入信号到<span
+class="math inline">\(d_2\)</span>个通道的输出信号的滤波映射，GCN的一层可形式化为以下矩阵形式：
+<span class="math display">\[
+Z = \tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2} X \Theta
+\]</span></p>
+<p>其中：</p>
+<ul>
+<li><span class="math inline">\(X \in \mathbb{R}^{N \times
+d_1}\)</span>表示频域滤波前的输入信号；</li>
+<li><span class="math inline">\(\Theta \in \mathbb{R}^{d_1 \times
+d_2}\)</span>表示<span class="math inline">\(d_1 \times
+d_2\)</span>个滤波的参数；</li>
+<li><span class="math inline">\(Z \in \mathbb{R}^{N \times
+d_2}\)</span>表示频域滤波后的输出信号。</li>
+</ul>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/graph_convolutional_network.png" class="" title="Graph Convolutional Network">
+<p>由此，就可以建立多层的GCN网络，以2层的GCN网络为例： <span
+class="math display">\[
+Z = f(X, A) = softmax(\hat{A}\; \mathrm{ReLU}(\hat{A} X W^{(0)})W^{(1)})
+\]</span> 其中，<span class="math inline">\(\hat{A} = \tilde{D}^{-1/2}
+\tilde{A} \tilde{D}^{-1/2}\)</span>。</p>
+<p>GCN可以用于实现半监督学习，即，以有标签的节点来计算损失，进行训练。具体的，论文中基于有标签节点计算交叉熵损失：
+<span class="math display">\[
+\mathcal{L} = - \sum_{l \in \mathcal{Y}_L} \sum_{f=1}^F Y_{lf} \ln
+Z_{lf}
+\]</span> 其中，<span
+class="math inline">\(\mathcal{Y}_L\)</span>是有标签的节点序号集合。</p>
+<p><strong>实验评价</strong></p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/GCN_propagation_comparison_table.png" class="" title="Comparison of propagation models">
+<p>本文设计的GCN做出的简化到底有没有意义呢？从实验结果来看，简化整体上提升了实验效果。</p>
+<img src="/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/GCN_classification_accuracy_summary.png" class="" title="Summary of results in terms of classification accuracy (in percent)">
+<p>相比其他模型，GCN在几个数据集上的分类准确率结果均为领先，而且速度更快。</p>
+<h5 id="graphsage">3.2.3.5 GraphSage</h5>
+<h5 id="gat">3.2.3.6 GAT</h5>
+<h5 id="mpnn">3.2.3.7 MPNN</h5>
+<h3 id="gnn中的池化">3.3 GNN中的池化</h3>
+<h4 id="gpool">3.3.1 gPool</h4>
+<h4 id="diffpool">3.3.2 DiffPool</h4>
+<h4 id="eigenpooling">3.3.3 Eigenpooling</h4>
+<h3 id="gnn的鲁棒性">3.4 GNN的鲁棒性</h3>
+<p><em>Robustness of GNN</em></p>
+<h3 id="gnn的扩展学习">3.5 GNN的扩展学习</h3>
+<p><em>Scalable Learning for GNN</em></p>
+<h2 id="应用">4 应用</h2>
+<h3 id="医疗保健">4.1 医疗保健</h3>
+<h3 id="自然语言处理">4.2 自然语言处理</h3>
+<h3 id="推荐系统">4.3 推荐系统</h3>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/GNNs-%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="GNNs - 图神经网络学习笔记">https://heary.cn/posts/GNNs-图神经网络学习笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Papers/" rel="tag"><i class="fa fa-tag"></i> Papers</a>
+              <a href="/tags/Deep-Learning/" rel="tag"><i class="fa fa-tag"></i> Deep Learning</a>
+              <a href="/tags/GNN/" rel="tag"><i class="fa fa-tag"></i> GNN</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E2%80%9CWindows-Defender%E5%8F%91%E7%8E%B01%E4%B8%AA%E5%A8%81%E8%83%81%E2%80%9D%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" rel="prev" title="“Windows Defender发现1个威胁”问题解决">
+                  <i class="fa fa-chevron-left"></i> “Windows Defender发现1个威胁”问题解决
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/GitHub-Pages-github-io-TLS%E5%8A%AB%E6%8C%81%E5%92%8C%E8%BF%9E%E6%8E%A5%E9%87%8D%E7%BD%AE%E9%97%AE%E9%A2%98/" rel="next" title="GitHub Pages (*.github.io) TLS劫持和连接重置问题">
+                  GitHub Pages (*.github.io) TLS劫持和连接重置问题 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"b26713aa14709874caa18d81abadcbd4"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="to be continued">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tf.variable_scope - HAN ValueError Analysis">
+<meta property="og:url" content="https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="to be continued">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-03-12T09:03:00.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.872Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Troubleshooting">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/","path":"posts/tf-variable-scope-HAN-ValueError-Analysis/","title":"tf.variable_scope - HAN ValueError Analysis"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>tf.variable_scope - HAN ValueError Analysis | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="tf.variable_scope - HAN ValueError Analysis | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          tf.variable_scope - HAN ValueError Analysis
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2018-03-12 17:03:00" itemprop="dateCreated datePublished" datetime="2018-03-12T17:03:00+08:00">2018-03-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>to be continued <span id="more"></span></p>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://www.tensorflow.org/api_docs/python/tf/variable_scope">tf.variable_scope
+| TensorFlow</a></p>
+</blockquote>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="http://blog.csdn.net/wenqiwenqi123/article/details/79436722">解决ValueError:
+Trying to share variable
+rnn/multi_rnn_cell/cell_0/basic_lstm_cell/kernel</a></p>
+</blockquote>
+<p>2018.2.13</p>
+<p>Comparing <strong>RNNCell</strong> in <code>API r1.0</code> and in
+<code>API r1.6</code></p>
+<blockquote>
+<p>This module provides a number of basic commonly used RNN cells, such
+as LSTM (Long Short Term Memory) or GRU (Gated Recurrent Unit), and a
+number of operators that allow add dropouts, projections, or embeddings
+for inputs. Constructing multi-layer cells is supported by the class
+<code>MultiRNNCell</code>, or by calling the <code>rnn</code> ops
+several times. Every <code>RNNCell</code> must have the properties below
+and implement <code>__call__</code> with the following signature.</p>
+<p><a
+target="_blank" rel="noopener" href="https://www.tensorflow.org/versions/r1.0/api_docs/python/tf/contrib/rnn/RNNCell">tf.contrib.rnn.RNNCell
+- API r1.0</a></p>
+</blockquote>
+<blockquote>
+<p>Every <code>RNNCell</code> must have the properties below and
+implement <code>call</code> with the signature
+<code>(output, next_state) = call(input, state)</code>. The optional
+third input argument, <code>scope</code>, is allowed for backwards
+compatibility purposes; but should be left off for new subclasses.</p>
+<p><a
+target="_blank" rel="noopener" href="https://www.tensorflow.org/api_docs/python/tf/contrib/rnn/RNNCell">tf.contrib.rnn.RNNCell
+- API r1.6</a></p>
+</blockquote>
+<ul>
+<li>I guess I should <strong>def</strong> new <code>call</code>
+<em>func</em> to replace old <code>__call__</code> <em>func</em> and
+return <code>(new_h, new_c)</code> according to <code>API r1.6</code>.
+<ul>
+<li><code>x</code> input</li>
+<li><code>new_h</code> output</li>
+<li><code>c</code>, <code>new_c</code> state</li>
+</ul></li>
+</ul>
+<p>ValueError:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ValueError: Trying to share variable tcm/word/fw/multi_rnn_cell/cell_0/bn_lstm/W_xh, but specified shape (100, 320) and found shape (200, 320).</span><br></pre></td></tr></table></figure>
+<p>Traceback:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">C:\Python36\python.exe D:/hierarchical-attention-networks-master/worker.py --mode=train --device=/gpu:0 --batch-size=30</span><br><span class="line">epoch 1</span><br><span class="line">data loaded</span><br><span class="line">2018-03-12 21:59:50.508320: I C:\tf_jenkins\workspace\rel-win\M\windows\PY\36\tensorflow\core\platform\cpu_feature_guard.cc:140] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File &quot;D:/hierarchical-attention-networks-master/worker.py&quot;, line 207, in &lt;module&gt;</span><br><span class="line">    main()</span><br><span class="line">  File &quot;D:/hierarchical-attention-networks-master/worker.py&quot;, line 202, in main</span><br><span class="line">    train()</span><br><span class="line">  File &quot;D:/hierarchical-attention-networks-master/worker.py&quot;, line 153, in train</span><br><span class="line">    model, saver = model_fn(s)</span><br><span class="line">  File &quot;D:/hierarchical-attention-networks-master/worker.py&quot;, line 86, in HAN_model_1</span><br><span class="line">    is_training=is_training,</span><br><span class="line">  File &quot;D:\hierarchical-attention-networks-master\HAN_model.py&quot;, line 67, in __init__</span><br><span class="line">    self._init_body(scope)</span><br><span class="line">  File &quot;D:\hierarchical-attention-networks-master\HAN_model.py&quot;, line 140, in _init_body</span><br><span class="line">    self.sentence_cell, self.sentence_cell, sentence_inputs, self.sentence_lengths, scope=scope)</span><br><span class="line">  File &quot;D:\hierarchical-attention-networks-master\model_components.py&quot;, line 24, in bidirectional_rnn</span><br><span class="line">    scope=scope))</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 416, in bidirectional_dynamic_rnn</span><br><span class="line">    time_major=time_major, scope=fw_scope)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 632, in dynamic_rnn</span><br><span class="line">    dtype=dtype)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 829, in _dynamic_rnn_loop</span><br><span class="line">    swap_memory=swap_memory)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\control_flow_ops.py&quot;, line 3096, in while_loop</span><br><span class="line">    result = loop_context.BuildLoop(cond, body, loop_vars, shape_invariants)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\control_flow_ops.py&quot;, line 2874, in BuildLoop</span><br><span class="line">    pred, body, original_loop_vars, loop_vars, shape_invariants)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\control_flow_ops.py&quot;, line 2814, in _BuildLoop</span><br><span class="line">    body_result = body(*packed_vars_for_body)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\control_flow_ops.py&quot;, line 3075, in &lt;lambda&gt;</span><br><span class="line">    body = lambda i, lv: (i + 1, orig_body(*lv))</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 798, in _time_step</span><br><span class="line">    skip_conditionals=True)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 249, in _rnn_step</span><br><span class="line">    new_output, new_state = call_cell()</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn.py&quot;, line 786, in &lt;lambda&gt;</span><br><span class="line">    call_cell = lambda: cell(input_t, state)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn_cell_impl.py&quot;, line 190, in __call__</span><br><span class="line">    return super(RNNCell, self).__call__(inputs, state)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\layers\base.py&quot;, line 696, in __call__</span><br><span class="line">    outputs = self.call(inputs, *args, **kwargs)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn_cell_impl.py&quot;, line 1234, in call</span><br><span class="line">    cur_inp, new_state = cell(cur_inp, cur_state)</span><br><span class="line">  File &quot;D:\hierarchical-attention-networks-master\bn_lstm.py&quot;, line 74, in __call__</span><br><span class="line">    initializer=orthogonal_initializer())</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\variable_scope.py&quot;, line 1297, in get_variable</span><br><span class="line">    constraint=constraint)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\variable_scope.py&quot;, line 1093, in get_variable</span><br><span class="line">    constraint=constraint)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\variable_scope.py&quot;, line 431, in get_variable</span><br><span class="line">    return custom_getter(**custom_getter_kwargs)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\rnn_cell_impl.py&quot;, line 193, in _rnn_get_variable</span><br><span class="line">    variable = getter(*args, **kwargs)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\variable_scope.py&quot;, line 408, in _true_getter</span><br><span class="line">    use_resource=use_resource, constraint=constraint)</span><br><span class="line">  File &quot;C:\Python36\lib\site-packages\tensorflow\python\ops\variable_scope.py&quot;, line 752, in _get_single_variable</span><br><span class="line">    found_var.get_shape()))</span><br><span class="line">ValueError: Trying to share variable tcm/word/fw/multi_rnn_cell/cell_0/bn_lstm/W_xh, but specified shape (100, 320) and found shape (200, 320).</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>in <code>HAN_model.py</code> below:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">HANClassifierModel</span>():</span><br><span class="line">  <span class="string">&quot;&quot;&quot; Implementation of document classification model described in</span></span><br><span class="line"><span class="string">    `Hierarchical Attention Networks for Document Classification (Yang et al., 2016)`</span></span><br><span class="line"><span class="string">    (https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf)&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self,</span></span><br><span class="line"><span class="params">               vocab_size,</span></span><br><span class="line"><span class="params">               embedding_size,</span></span><br><span class="line"><span class="params">               classes,</span></span><br><span class="line"><span class="params">               word_cell,</span></span><br><span class="line"><span class="params">               sentence_cell,</span></span><br><span class="line"><span class="params">               word_output_size,</span></span><br><span class="line"><span class="params">               sentence_output_size,</span></span><br><span class="line"><span class="params">               max_grad_norm,</span></span><br><span class="line"><span class="params">               dropout_keep_proba,</span></span><br><span class="line"><span class="params">               is_training=<span class="literal">None</span>,</span></span><br><span class="line"><span class="params">               learning_rate=<span class="number">1e-4</span>,</span></span><br><span class="line"><span class="params">               device=<span class="string">&#x27;/cpu:0&#x27;</span>,</span></span><br><span class="line"><span class="params">               scope=<span class="literal">None</span></span>):</span><br><span class="line">    self.vocab_size = vocab_size</span><br><span class="line">    self.embedding_size = embedding_size</span><br><span class="line">    self.classes = classes</span><br><span class="line">    self.word_cell = word_cell</span><br><span class="line">    self.word_output_size = word_output_size</span><br><span class="line">    self.sentence_cell = sentence_cell</span><br><span class="line">    self.sentence_output_size = sentence_output_size</span><br><span class="line">    self.max_grad_norm = max_grad_norm</span><br><span class="line">    self.dropout_keep_proba = dropout_keep_proba</span><br><span class="line"></span><br><span class="line">    <span class="keyword">with</span> tf.variable_scope(scope <span class="keyword">or</span> <span class="string">&#x27;tcm&#x27;</span>) <span class="keyword">as</span> scope:</span><br><span class="line">      self.global_step = tf.Variable(<span class="number">0</span>, name=<span class="string">&#x27;global_step&#x27;</span>, trainable=<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> is_training <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">        self.is_training = is_training</span><br><span class="line">      <span class="keyword">else</span>:</span><br><span class="line">        self.is_training = tf.placeholder(dtype=tf.<span class="built_in">bool</span>, name=<span class="string">&#x27;is_training&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      self.sample_weights = tf.placeholder(shape=(<span class="literal">None</span>,), dtype=tf.float32, name=<span class="string">&#x27;sample_weights&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      <span class="comment"># [document x sentence x word]</span></span><br><span class="line">      self.inputs = tf.placeholder(shape=(<span class="literal">None</span>, <span class="literal">None</span>, <span class="literal">None</span>), dtype=tf.int32, name=<span class="string">&#x27;inputs&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      <span class="comment"># [document x sentence]</span></span><br><span class="line">      self.word_lengths = tf.placeholder(shape=(<span class="literal">None</span>, <span class="literal">None</span>), dtype=tf.int32, name=<span class="string">&#x27;word_lengths&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      <span class="comment"># [document]</span></span><br><span class="line">      self.sentence_lengths = tf.placeholder(shape=(<span class="literal">None</span>,), dtype=tf.int32, name=<span class="string">&#x27;sentence_lengths&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      <span class="comment"># [document]</span></span><br><span class="line">      self.labels = tf.placeholder(shape=(<span class="literal">None</span>,), dtype=tf.int32, name=<span class="string">&#x27;labels&#x27;</span>)</span><br><span class="line"></span><br><span class="line">      (self.document_size,</span><br><span class="line">        self.sentence_size,</span><br><span class="line">        self.word_size) = tf.unstack(tf.shape(self.inputs))</span><br><span class="line"></span><br><span class="line">      self._init_embedding(scope)</span><br><span class="line"></span><br><span class="line">      <span class="comment"># embeddings cannot be placed on GPU</span></span><br><span class="line">      <span class="keyword">with</span> tf.device(device):</span><br><span class="line">        self._init_body(scope)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">with</span> tf.variable_scope(<span class="string">&#x27;train&#x27;</span>):</span><br><span class="line">      self.cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits)</span><br><span class="line"></span><br><span class="line">      self.loss = tf.reduce_mean(tf.multiply(self.cross_entropy, self.sample_weights))</span><br><span class="line">      tf.summary.scalar(<span class="string">&#x27;loss&#x27;</span>, self.loss)</span><br><span class="line"></span><br><span class="line">      self.accuracy = tf.reduce_mean(tf.cast(tf.nn.in_top_k(self.logits, self.labels, <span class="number">1</span>), tf.float32))</span><br><span class="line">      tf.summary.scalar(<span class="string">&#x27;accuracy&#x27;</span>, self.accuracy)</span><br><span class="line"></span><br><span class="line">      tvars = tf.trainable_variables()</span><br><span class="line"></span><br><span class="line">      grads, global_norm = tf.clip_by_global_norm(</span><br><span class="line">        tf.gradients(self.loss, tvars),</span><br><span class="line">        self.max_grad_norm)</span><br><span class="line">      tf.summary.scalar(<span class="string">&#x27;global_grad_norm&#x27;</span>, global_norm)</span><br><span class="line"></span><br><span class="line">      opt = tf.train.AdamOptimizer(learning_rate)</span><br><span class="line"></span><br><span class="line">      self.train_op = opt.apply_gradients(</span><br><span class="line">        <span class="built_in">zip</span>(grads, tvars), name=<span class="string">&#x27;train_op&#x27;</span>,</span><br><span class="line">        global_step=self.global_step)</span><br><span class="line"></span><br><span class="line">      self.summary_op = tf.summary.merge_all()</span><br></pre></td></tr></table></figure>
+<p>in <code>bn_lstm.py</code> below:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">BNLSTMCell</span>(<span class="title class_ inherited__">RNNCell</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Batch normalized LSTM as described in http://arxiv.org/abs/1603.09025&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_units, training</span>):</span><br><span class="line">        self.num_units = num_units</span><br><span class="line">        self.training = training</span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">state_size</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> (self.num_units, self.num_units)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">output_size</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> self.num_units</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__call__</span>(<span class="params">self, x, state, scope=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="keyword">with</span> tf.variable_scope(scope <span class="keyword">or</span> <span class="string">&#x27;bn_lstm&#x27;</span>):</span><br><span class="line">            c, h = state</span><br><span class="line"></span><br><span class="line">            x_size = x.get_shape().as_list()[<span class="number">1</span>]</span><br><span class="line">            W_xh = tf.get_variable(<span class="string">&#x27;W_xh&#x27;</span>,    <span class="comment"># ValueError!!!</span></span><br><span class="line">                [x_size, <span class="number">4</span> * self.num_units],</span><br><span class="line">                initializer=orthogonal_initializer())</span><br><span class="line">            W_hh = tf.get_variable(<span class="string">&#x27;W_hh&#x27;</span>,</span><br><span class="line">                [self.num_units, <span class="number">4</span> * self.num_units],</span><br><span class="line">                initializer=bn_lstm_identity_initializer(<span class="number">0.95</span>))</span><br><span class="line">            bias = tf.get_variable(<span class="string">&#x27;bias&#x27;</span>, [<span class="number">4</span> * self.num_units])</span><br><span class="line"></span><br><span class="line">            xh = tf.matmul(x, W_xh)</span><br><span class="line">            hh = tf.matmul(h, W_hh)</span><br><span class="line"></span><br><span class="line">            bn_xh = batch_norm(xh, <span class="string">&#x27;xh&#x27;</span>, self.training)</span><br><span class="line">            bn_hh = batch_norm(hh, <span class="string">&#x27;hh&#x27;</span>, self.training)</span><br><span class="line"></span><br><span class="line">            hidden = bn_xh + bn_hh + bias</span><br><span class="line"></span><br><span class="line">            i, j, f, o = tf.split(hidden, <span class="number">4</span>, axis=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">            new_c = c * tf.sigmoid(f) + tf.sigmoid(i) * tf.tanh(j)</span><br><span class="line">            bn_new_c = batch_norm(new_c, <span class="string">&#x27;c&#x27;</span>, self.training)</span><br><span class="line"></span><br><span class="line">            new_h = tf.tanh(bn_new_c) * tf.sigmoid(o)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> new_h, (new_c, new_h)</span><br></pre></td></tr></table></figure>
+<p>I guess Variable W_xh in
+<code>tcm/word/fw/multi_rnn_cell/cell_0/bn_lstm/W_xh</code> is in
+conflict with value in so-called <code>specified shape</code></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/" title="tf.variable_scope - HAN ValueError Analysis">https://heary.cn/posts/tf-variable-scope-HAN-ValueError-Analysis/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Troubleshooting/" rel="tag"><i class="fa fa-tag"></i> Troubleshooting</a>
+              <a href="/tags/TensorFlow/" rel="tag"><i class="fa fa-tag"></i> TensorFlow</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/TensorFlow-%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="prev" title="TensorFlow - 基础笔记">
+                  <i class="fa fa-chevron-left"></i> TensorFlow - 基础笔记
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E5%B1%82%E6%AC%A1%E6%B3%A8%E6%84%8F%E5%8A%9B%E7%9A%84%E5%8F%AF%E8%A7%86%E5%8C%96%E5%88%86%E6%9E%90/" rel="next" title="层次注意力的可视化分析">
+                  层次注意力的可视化分析 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"e0c4c699fb7658a5124c70bf6a0027bd"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

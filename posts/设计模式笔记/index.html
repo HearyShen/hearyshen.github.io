@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="设计模式有不少书籍、笔记和文档，抽象的、形式化的逻辑关系就不再赘述。本文主要记录学习过程中的感性理解，记录具象的案例、自己通俗理解的原理和适用情况。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="设计模式笔记">
+<meta property="og:url" content="https://heary.cn/posts/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="设计模式有不少书籍、笔记和文档，抽象的、形式化的逻辑关系就不再赘述。本文主要记录学习过程中的感性理解，记录具象的案例、自己通俗理解的原理和适用情况。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-06-29T02:56:20.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.886Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Design Pattern">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0/","path":"posts/设计模式笔记/","title":"设计模式笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>设计模式笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0"><span class="nav-text">设计模式笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-text">0 链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8Fcreational-pattern"><span class="nav-text">1 创建型模式（Creational
+Pattern）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E4%BE%8Bsingleton"><span class="nav-text">1.1 单例（Singleton）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%B7%A5%E5%8E%82simple-factory"><span class="nav-text">1.2 简单工厂（Simple Factory）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95factory-method"><span class="nav-text">1.3 工厂方法（Factory Method）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82abstract-factory"><span class="nav-text">1.4 抽象工厂（Abstract Factory）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E5%99%A8builder"><span class="nav-text">1.5 生成器（Builder）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E5%9E%8Bprototype"><span class="nav-text">1.6 原型（Prototype）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8Fbehavioral-pattern"><span class="nav-text">2 行为型模式（Behavioral
+Pattern）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%A3%E4%BB%BB%E9%93%BEchain-of-responsibility"><span class="nav-text">2.1 责任链（Chain of
+Responsibility）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4command"><span class="nav-text">2.2 命令（Command）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8interpreter"><span class="nav-text">2.3 解释器（Interpreter）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8iterator"><span class="nav-text">2.4 迭代器（Iterator）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E4%BB%8B%E8%80%85mediator"><span class="nav-text">2.5 中介者（Mediator）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%87%E5%BF%98%E5%BD%95memento"><span class="nav-text">2.6 备忘录（Memento）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%82%E5%AF%9F%E8%80%85observer"><span class="nav-text">2.7 观察者（Observer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81state"><span class="nav-text">2.8 状态（State）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%96%E7%95%A5strategy"><span class="nav-text">2.9 策略（Strategy）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95template-method"><span class="nav-text">2.10 模板方法（Template Method）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E8%80%85visitor"><span class="nav-text">2.11 访问者（Visitor）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E5%AF%B9%E8%B1%A1null"><span class="nav-text">2.12 空对象（Null）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8Fstructural-pattern"><span class="nav-text">3 结构型模式（Structural
+Pattern）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%82%E9%85%8D%E5%99%A8adapter"><span class="nav-text">3.1 适配器（Adapter）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%A5%E6%8E%A5bridge"><span class="nav-text">3.2 桥接（Bridge）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%84%E5%90%88composite"><span class="nav-text">3.3 组合（Composite）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A3%85%E9%A5%B0decorator"><span class="nav-text">3.4 装饰（Decorator）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%96%E8%A7%82facade"><span class="nav-text">3.5 外观（Facade）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%AB%E5%85%83flyweight"><span class="nav-text">3.6 享元（Flyweight）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%90%86proxy"><span class="nav-text">3.7 代理（Proxy）</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="设计模式笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          设计模式笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-06-29 10:56:20" itemprop="dateCreated datePublished" datetime="2020-06-29T10:56:20+08:00">2020-06-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>设计模式有不少书籍、笔记和文档，抽象的、形式化的逻辑关系就不再赘述。本文主要记录学习过程中的感性理解，记录具象的案例、自己通俗理解的原理和适用情况。</p>
+<span id="more"></span>
+<h1 id="设计模式笔记">设计模式笔记</h1>
+<h2 id="链接">0 链接</h2>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://cyc2018.github.io/CS-Notes/#/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%9B%AE%E5%BD%951">CS-Notes
+设计模式</a></p>
+</blockquote>
+<p>CYC2018的笔记，讲的言简意赅，配合Java代码的示例，可读性好，容易快速看懂，还列举了这些设计模式在JDK中的应用。</p>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://design-patterns.readthedocs.io/zh_CN/latest/">图说设计模式</a></p>
+</blockquote>
+<p>图说设计模式文档列举的设计模式少一些，但每个设计模式写的都更为详细，配合UML关系图、时序图、C++代码实例以及优缺点评述，可以更深地理解。</p>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式|菜鸟教程</a></p>
+</blockquote>
+<p>菜鸟教程网站的设计模式，配备图示、示例代码，主要是介绍部分对核心思想、优缺点列举的很清晰。</p>
+<h2 id="创建型模式creational-pattern">1 创建型模式（Creational
+Pattern）</h2>
+<p>顾名思义，创建型模式就是创建实例。</p>
+<h3 id="单例singleton">1.1 单例（Singleton）</h3>
+<p>理解：</p>
+<ul>
+<li>确保<strong>一个类只有一个实例</strong>。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>驱动程序提供的服务，如：打印机驱动程序提供的打印服务。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>通过类的静态方法和静态变量，调用getSingleton方法时返回唯一的实例（若未初始化，则先初始化创建）。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>面向全局提供单例的、不希望重复创建实例的情况。</li>
+</ul>
+<h3 id="简单工厂simple-factory">1.2 简单工厂（Simple Factory）</h3>
+<p>理解：</p>
+<ul>
+<li>一个工厂根据订单要求来实例化相应的产品。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>客户给食品工厂下达订单，订单要求饼干，工厂就调用饼干实例化方法生产饼干；订单要求棒冰，工厂就调用棒冰实例化方法生产棒冰。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>工厂类的<code>creareProduct</code>方法根据输入的参数，实例化对应的产品作为结果返回。</li>
+<li>用户调用时，调用具体工厂，用抽象产品来接收返回的创建出的产品。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>产品类型少，创建对象少。对扩展性要求不高。因为一旦增加产品，就需要修改工厂实现。</li>
+</ul>
+<h3 id="工厂方法factory-method">1.3 工厂方法（Factory Method）</h3>
+<p>理解：</p>
+<ul>
+<li>一个具体工厂生产其对应的具体产品，用户调用哪个具体工厂，就生产其对应的产品。</li>
+<li><strong>一个工厂生产一类产品。</strong></li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>饼干工厂生产饼干，棒冰工厂生产棒冰。客户调用哪个具体工厂，就生产得到哪个具体产品。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>具体工厂的<code>createProduct</code>方法生成其对应的具体产品。</li>
+<li>用户调用时，用抽象工厂（基类、接口）来调用具体工厂，用抽象产品（基类、接口）来接收具体产品。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>比简单工厂可扩展性更好，客户端中处理的都是抽象工厂、抽象产品，可以轻松扩展新的具体工厂和具体产品。符合开放闭合原则。</li>
+</ul>
+<h3 id="抽象工厂abstract-factory">1.4 抽象工厂（Abstract Factory）</h3>
+<p>理解：</p>
+<ul>
+<li>不同的工厂可以生产同类但不同种的产品。</li>
+<li><strong>一个工厂生产多类产品。</strong></li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>苹果工厂可以生产手机和电脑，小米工厂也可以生产手机和电脑，他们生产的产品属于同类但不同种。客户调用哪个具体工厂，就获取该工厂生产的各类产品。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>具体工厂的<code>createProductA</code>生产其对应的A类具体商品，<code>createProductB</code>生产其对应的B类具体商品。</li>
+<li>每类产品用一个抽象产品表示，每个工厂都可以生产若干个抽象产品的具体产品。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>相比于工厂模式一个具体工厂生产一类产品，抽象工厂可以适用于更复杂的情况——一个具体工厂可以生产多类产品。</li>
+</ul>
+<h3 id="生成器builder">1.5 生成器（Builder）</h3>
+<p>理解：</p>
+<ul>
+<li>生成器可以接受<strong>持续的增删修改</strong>，最终的结果用来生成一个整体的东西。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li><code>StringBuilder</code>可以连续接受String的增删，然后生成一个最终的String。</li>
+<li>电商购物车可以接受商品的增删修改，结算的时候再生成一个最终的订单。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>生成器内部是一个容器，对容器进行增删修改，最后生成时用容器中的数据来创建一个生成结果。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>实例的创建过程比较复杂，不是一下子就能创建的，需要连续增删修改，直到到最终生成的情况。</li>
+</ul>
+<h3 id="原型prototype">1.6 原型（Prototype）</h3>
+<p>理解：</p>
+<ul>
+<li>相当于<strong>克隆</strong>给定原型对象，以一个实例为原型，再克隆一个出来。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>我有一份纸质文件作为原型，我用复印机复印了一份出来，即创建了原型的复制。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>原型类要提供克隆方法供外部调用。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>给定原型，克隆出新对象的情况。</li>
+</ul>
+<h2 id="行为型模式behavioral-pattern">2 行为型模式（Behavioral
+Pattern）</h2>
+<p>行为型模式是对在不同对象之间划分责任和算法的抽象化。就像是划分每个人的工作内容和职责。</p>
+<h3 id="责任链chain-of-responsibility">2.1 责任链（Chain of
+Responsibility）</h3>
+<p>理解：</p>
+<ul>
+<li>发送者发出请求，接收方是一个责任链，链上的对象依次收到请求，能处理就处理请求完成任务，不能处理就往后面继续传递，直到最后有接收者处理掉。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>用户发来HTTP
+GET请求，CDN里有缓存就直接响应，没有就发给源站，源站的缓存里有结果就拿来响应，没有就继续查询数据库，数据库有结果就返回，没有就再转交给Not
+Found的处理机制去处理，完成响应。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>把<code>Handler</code>组织成链表的形式，前面的无法处理，就交给后续的处理。</li>
+</ul>
+<h3 id="命令command">2.2 命令（Command）</h3>
+<p>理解：</p>
+<ul>
+<li>把命令（命令对应一系列操作）封装在一个<strong>命令对象</strong>里。</li>
+<li>Client把Command设置到Invoker里用来调用，而Command里负责调用Receiver的方法，即执行命令。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>遥控器就是一个Invoker，里面装了很多代表Command的按钮，Client只管操作遥控器上的按钮，按钮所对应的命令程序负责发送信号，遥控目标。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>对命令进行封装，将命令执行的流程封装在命令对象中。</li>
+<li>引入抽象命令接口，外部只需要调用命令实例执行命令方法，具体命令才负责具体完成命令所需的具体执行步骤。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>Client不直接和Receiver接触。</li>
+<li>Command既然已经封装为实例了，那就可以以实例的形式放到容器里，例如：队列，排队等待执行。</li>
+</ul>
+<h3 id="解释器interpreter">2.3 解释器（Interpreter）</h3>
+<p>理解：</p>
+<ul>
+<li>为语言创建解释器，通常由语言的语法和语法分析来定义。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>句法分析，句法解析树。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>解析上下文，分解交给下一级，形成句法分析树。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>语法、句法等分析。</li>
+</ul>
+<h3 id="迭代器iterator">2.4 迭代器（Iterator）</h3>
+<p>理解：</p>
+<ul>
+<li>顺序访问，迭代容器内的对象。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>各类数据结构的迭代器。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>迭代器与容器相关联，记录着容器中的迭代位置，提供hasNext()和next()方法来检测后续有没有，以及获取后续元素。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>迭代容器。</li>
+</ul>
+<h3 id="中介者mediator">2.5 中介者（Mediator）</h3>
+<p>理解：</p>
+<ul>
+<li>做一件事情需要牵涉到很多对象，找一个<strong>中介</strong>，让中介去和杂七杂八的对象打交道，我只要和中介对接就可以了。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>线程池里有很多线程，我不需要去管理每一个具体线程，我只需要把任务交给线程池就行。</li>
+<li>房产中介负责给汇总卖方们的信息，提供给买方一个结论。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>中介需要调用各方面的对象（同事），完成复杂的沟通和控制，完成调用者的目标。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>调用方从与各种对象的复杂控制关系中脱离出来，交给中介去处理。</li>
+</ul>
+<h3 id="备忘录memento">2.6 备忘录（Memento）</h3>
+<p>理解：</p>
+<ul>
+<li>把对象的内部状态<strong>记录</strong>下来，必要的适合可以<strong>恢复</strong>到当时的状态。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>序列化，如：把一个字典序列化为JSON格式的文本，必要的适合可以从JSON来恢复出字典。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>对象要实现<code>createMemento</code>方法（backup）来输出内部状态，实现<code>setMemento</code>方法（recover）来根据记录内部状态的备忘录恢复内部状态。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>个人理解就是实现备份和恢复的功能。</li>
+</ul>
+<h3 id="观察者observer">2.7 观察者（Observer）</h3>
+<p>理解：</p>
+<ul>
+<li>观察者可以<strong>注册</strong>到被观察对象上，被观察对象状态变化的时候，要<strong>通知</strong>观察者。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>烟雾报警器状态变化的时候，要发送信息、信号来通知房屋管理方，手机APP。</li>
+<li>服务器管理平台发现服务器温度过热了，服务器管理平台通过邮件、消息推送告警信息给管理员。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>被观察对象里能够添加、关联观察者，被观察对象的update方法除了修改内部状态，也要执行观察者的notify方法。</li>
+</ul>
+<h3 id="状态state">2.8 状态（State）</h3>
+<p>理解：</p>
+<ul>
+<li>主体的状态会<strong>自动</strong>变化，根据主体的状态，做相应的操作。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>在自动贩卖机有货的时候按购买按钮执行的是支付-出货操作，在没货的时候按购买按钮，执行的是缺货提醒操作。按下同一个按钮，在状态不同的时候执行的操作就不同了。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>调用的是状态实例的方法，这样状态改变了，调用的方法自然就改变了。</li>
+<li>状态的方法要检测上下文，及时修改主体的状态。主体关联状态，每一个状态实例也关联主体。</li>
+<li>售卖机有货的时候，购买时，调用售卖机的<code>HasProductState.sell()</code>方法，该方法如果发现卖完就售空了，要把售卖机的状态修改为<code>NoProductState</code>缺货状态，下次再购买时，调用的就是<code>NoProductState.sell()</code>了。</li>
+</ul>
+<h3 id="策略strategy">2.9 策略（Strategy）</h3>
+<p>理解：</p>
+<ul>
+<li>把算法实例化为策略对象，我给主体<strong>手动</strong>设置哪个策略，主体就执行哪个策略。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>创建一个Robot，他调用自己的<code>hello()</code>方法来打招呼，该<code>hello</code>方法调用<code>strategy.hello()</code>，我把他的策略设置为<code>EnglishStrategy</code>，他就调用<code>EnglishStrategy.hello()</code>输出<code>Hello</code>，我把他的策略设置为<code>ChineseStrategy</code>，他就调用<code>ChineseStrategy.hello()</code>输出<code>你好</code>。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>算法由策略对象实现，主体调用自己的策略对象实现的算法。</li>
+</ul>
+<h3 id="模板方法template-method">2.10 模板方法（Template Method）</h3>
+<p>理解：</p>
+<ul>
+<li>抽象类定义的功能方法是一个<strong>调用模板</strong>，模板里具体被调的函数有的实现了，有的是抽象方法，还没实现，需要子类实现。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>冲剂饮料作为抽象类，冲泡饮料包含：倒水、加冲剂、搅拌三步。倒水和搅拌没区别，加冲剂则为抽象方法。咖啡作为子类，实现的加冲剂方法就是加咖啡粉。橙汁作为子类，实现的加冲剂方法就是加橙汁粉。基类定义的模板由子类来实现。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>抽象类可以定义具体方法和抽象方法，组合起来可以形成一个模板方法。模板方法中用到的抽象方法交给子类去实现。外部调用抽象类的模板方法就可以了。</li>
+</ul>
+<h3 id="访问者visitor">2.11 访问者（Visitor）</h3>
+<p>理解：</p>
+<ul>
+<li>访问者访问对象结构（包含一些对象），对象结构要接待访问者，要安排对象结构中的每个对象<strong>接待</strong>访问者，让访问者<strong>访问</strong>这些对象。访问者访问完对象结构中的各个对象，就可以根据访问过程中记录的信息，汇总出结果。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>访问者遍历一批客户对象，在访问的过程中汇总这些客户的订单数据（数量、金额）。</li>
+<li>审计员访问（visit）工厂，工厂总经理负责接待（accept），要安排每一个办公室、车间、仓库的负责人接待（accept）审计员，让审计员访问（visit），审计员完成访问后，就可以得出审计结果，完成审计报告。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>访问者实现访问方法<code>visit(element)</code>；</li>
+<li>被访问的对象结构和对象实现接待方法<code>accept(visitor)</code>，接待方法中负责调用访问者的访问方法<code>visitor.visit(myself)</code>让访问者能访问自己；</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>数据结构预留面向访问者的接待方法，可以让外部动态地实现访问方法，增加对数据结构的遍历操作功能。</li>
+</ul>
+<h3 id="空对象null">2.12 空对象（Null）</h3>
+<p>理解：</p>
+<ul>
+<li>空对象什么也不做，只是用来代替<code>Null</code>。</li>
+<li>这样一来，调用方就不用检查结果是否为null了，只管调用空对象的对应方法，反正什么也不会做就结束了。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>JDK中的<code>Collections.emptySet()</code>、<code>Collections.emptyMap()</code>、<code>Collections.emptyList()</code>都是返回可读但不可写的空对象。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>实对象实现有功能的<code>handle()</code>方法，空对象实现没功能的<code>handle()</code>方法。调用实对象时执行功能操作，调用空对象时执行空白的、没有操作的方法。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>检查判断Null代价高时，可以用空对象。</li>
+</ul>
+<h2 id="结构型模式structural-pattern">3 结构型模式（Structural
+Pattern）</h2>
+<p>结构型模式的作用在于，把类或对象以某种结构模式来组合起来，形成一个更大的结构，就像搭积木。</p>
+<h3 id="适配器adapter">3.1 适配器（Adapter）</h3>
+<p>理解：</p>
+<ul>
+<li>适配器把具体的特殊调用<strong>转换</strong>为统一的调用方法，让用户可以通过适配器的一个方法，调用各种特殊的具体方法。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>三脚插座只能用三脚插头，但是通过两脚转三脚适配器，就可以用两脚插头。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li><p>用户只需要调用适配器提供的统一的方法，适配器方法的实现则需要去调用具体各种的特殊方法。</p></li>
+<li><p>Client只调用一个标准方法（如：<code>add()</code>方法），但被调用的数据结构各有各的特殊方法，有的数据结构是<code>append()</code>方法，有的是<code>push()</code>方法。通过定义适配器，Client统一都调用适配器<code>adapter.add()</code>即可，而适配器在<code>adapter.add()</code>中调用<code>data.push()</code>或<code>data.append()</code>这些特殊的add方法。</p></li>
+</ul>
+<h3 id="桥接bridge">3.2 桥接（Bridge）</h3>
+<p>理解：</p>
+<ul>
+<li>将抽象与实现分离开来，使它们可以独立变化。</li>
+<li>外部使用抽象接口，内部实现抽象接口。<strong>抽象接口</strong>就是桥接的桥梁。</li>
+<li>顶层应用只关心抽象的接口功能，至于每个具体类与对象是怎么实现这些接口功能，是底层实现的关心的事情。顶层变动了底层不需要跟着改，底层变动了顶层也依旧可以工作，只要接口不改就行。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>定义图形接口<code>Drawing</code>，配有绘制函数<code>draw()</code>；圆形<code>Circle</code>、方形<code>Square</code>都扩展了该接口，分别完成了<code>draw</code>绘制函数的具体实现。外部只需要通过调用<code>Drawing</code>接口引用图形实例，调用接口的<code>draw</code>函数实现实例的绘制，至于每个图形具体是如何实现绘制功能的，外部不需要关心。这种通过接口来引用实例、调用方法的做法就是桥接模式。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>通过定义接口、抽象类来规定桥接的”桥“；具体类要负责扩展接口、实现抽象类，外部不关心其具体实现；外部通过接口、抽象类引用具体实例，调用接口、抽象类所定义的方法来调用具体实例的功能。</li>
+</ul>
+<h3 id="组合composite">3.3 组合（Composite）</h3>
+<p>理解：</p>
+<ul>
+<li>把对象组合成树形结构。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>二叉树，节点实例又包含了对左子树和右子树的引用。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>组件（Component）类是组合类（Composite）和叶子类（Leaf）的父类，可以把组合类看成是树的中间节点。</li>
+<li>组合对象拥有一个或者多个组件对象，因此组合对象的操作可以委托给组件对象去处理，而组件对象可以是另一个组合对象或者叶子对象。</li>
+</ul>
+<h3 id="装饰decorator">3.4 装饰（Decorator）</h3>
+<p>理解：</p>
+<ul>
+<li>为对象<strong>添加功能</strong>；</li>
+<li>装饰模式把原来的对象又包了一层（装饰了一层），装饰对象里包含了被装饰对象，不再直接调用原始的被装饰对象。这样一来，调用装饰对象的方法时候，就可以在调用被装饰对象方法的基础之上，再额外执行装饰对象增添的功能。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>Java中的Stream
+I/O，通过<code>BufferedInputStream</code>、<code>BufferedOutputStream</code>、<code>ZipOutputStream</code>等装饰类，在调用<code>InputStream</code>和<code>OutputStream</code>的基础之上，额外实现了缓存、压缩等功能。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>装饰类里把被装饰类实例作为成员，外部调用装饰类实现的方法，装饰类再调用被装饰类的方法，并实现一些其他的功能。</li>
+</ul>
+<h3 id="外观facade">3.5 外观（Facade）</h3>
+<p>理解：</p>
+<ul>
+<li>系统内部太复杂了，外部难以访问操作，那就对外提供一批<strong>统一的简易接口</strong>，让外部更容易使用系统的功能。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>手机、电脑的有各种一键模式：飞行模式可以一键关闭所有的无线电通信功能，不需要再一个个单独关闭WiFi、蓝牙、移动网络等等；勿扰模式可以一键关闭震动、铃声、消息弹窗等功能，不需要单独屏蔽；</li>
+<li>一些”安全“软件的一键体检、一键优化也是对外提供的统一接口，一键实现了很多文件扫描、设置修改功能。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>定义一个外观类，实现对外提供的方法，例如：一键优化、勿扰模式、飞行模式等方法，这些方法完成具体的操作。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>通过外观（Facade）模式，为复杂子系统提供简单接口。</li>
+</ul>
+<h3 id="享元flyweight">3.6 享元（Flyweight）</h3>
+<p>理解：</p>
+<ul>
+<li>Flyweight在英语里的意思是”小东西，无足轻重的东西“；</li>
+<li>享元模式就是通过<strong>共享</strong>的形式来复用大量<strong>内部状态相同的小东西</strong>（细粒度对象），相同内容的小对象，没必要重复创建，共享同一个就可以了。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>Java中的字符串常量池（String
+Pool），创建字符串对象时，如果字符串常量池中已经有相同内容的字符串常量了，那就不再实例化新对象了，直接共享已有的。</li>
+<li>Java中，包装类<code>Integer</code>、<code>Long</code>、<code>Double</code>等的<code>valueOf()</code>函数也是共享相同的常量对象，已有的就不再新建，共享已有常量即可。</li>
+<li>操作系统中，文件复制的Copy-on-Write(CoW)机制，也是共享（不过可能未必算小对象）。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>享元对象包含内部状态（Intrinsic state）和外部状态（Extrinsic
+state）。内部状态存储在享元内部，不因环境改变；外部状态由Client另外保存，调用的时候再传入享元。享元对象之间，内部状态相同，即可共享；外部状态则可以互相不同。</li>
+<li>建立一个对象池（享元池，Flyweight
+Pool），如果缓存池里有相同内部状态的享元对象，就无需实例化新对象，直接共享已有的。</li>
+</ul>
+<h3 id="代理proxy">3.7 代理（Proxy）</h3>
+<p>理解：</p>
+<ul>
+<li>代理模式<strong>控制</strong>对原始对象的访问。</li>
+<li>在用户和目标对象之间，加一层代理。让用户不直接接触目标对象，所需操作要经由代理来<strong>代办</strong>。</li>
+</ul>
+<p>案例：</p>
+<ul>
+<li>现实生活中，律师就是一种代理，将当事人与其他的相关方隔开，所有的对当事人的询问、诉求、谴责都经由律师处理，由律师来把关，判断合不合适，保护当事人利益。秘书、管家都由代理的功能，访客不直接见主人，需要先请求秘书、管家进行安排，秘书、管家作为中间的代理，负责把关、甄别，再转交给主人处理。</li>
+<li>软件开发中，代理有以下四类：
+<ul>
+<li>远程代理（Remote
+Proxy）：控制对远程对象（不同地址空间）的访问，它负责将请求及其参数进行编码，并向不同地址空间中的对象发送已经编码的请求。</li>
+<li>虚拟代理（Virtual
+Proxy）：根据需要创建开销很大的对象，它可以缓存实体的附加信息，以便延迟对它的访问，例如：在网站加载一个很大图片时，不能马上完成，可以用虚拟代理缓存图片的大小信息，然后生成一张临时图片代替原始图片。</li>
+<li>保护代理（Protection
+Proxy）：按权限控制对象的访问，它负责检查调用者是否具有实现一个请求所必须的访问权限。</li>
+<li>智能代理（Smart
+Reference）：取代了简单的指针，它在访问对象时执行一些附加操作：记录对象的引用次数；当第一次引用一个对象时，将它装入内存；在访问一个实际对象前，检查是否已经锁定了它，以确保其它对象不能改变它。</li>
+</ul></li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>代理实现和原始对象相同的接口，代理实例中关联了原始对象。使用时访问代理实例，调用代理实例实现的接口方法。代理实例实现的接口方法可以包含：编解码、权限检查、临时缓存、操作记录等功能。</li>
+</ul>
+<p>适用：</p>
+<ul>
+<li>个人感觉代理模式和装饰模式挺像的，都是把原始对象作为代理类型实例、装饰类型实例的成员，让外部不要直接调用原始对象，而是由代理实例、装饰实例去代办，往往用来增加额外功能。我感觉区别可能主要在于，代理模式侧重于控制访问权限（偏安全管控），装饰模式侧重于增加额外操作以改进功能（把粗糙的装饰得更完善）。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0/" title="设计模式笔记">https://heary.cn/posts/设计模式笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Design-Pattern/" rel="tag"><i class="fa fa-tag"></i> Design Pattern</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/UML%E7%AC%94%E8%AE%B0/" rel="prev" title="UML笔记">
+                  <i class="fa fa-chevron-left"></i> UML笔记
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/" rel="next" title="数据库原理笔记">
+                  数据库原理笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"1bd9adeff34b95facbaa5c8128bbf947"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

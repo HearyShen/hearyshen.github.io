@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在CentOS8上搭建Samba服务，配置实现多用户之间的文件共享和权限隔离。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="samba - 基于CentOS8搭建多用户文件共享服务">
+<meta property="og:url" content="https://heary.cn/posts/samba-%E5%9F%BA%E4%BA%8ECentOS8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="在CentOS8上搭建Samba服务，配置实现多用户之间的文件共享和权限隔离。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-11-18T10:18:16.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.869Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Deploy">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Samba">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/samba-%E5%9F%BA%E4%BA%8ECentOS8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/samba-%E5%9F%BA%E4%BA%8ECentOS8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1/","path":"posts/samba-基于CentOS8搭建多用户文件共享服务/","title":"samba - 基于CentOS8搭建多用户文件共享服务"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>samba - 基于CentOS8搭建多用户文件共享服务 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#samba---%E5%9F%BA%E4%BA%8Ecentos8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1"><span class="nav-text">samba -
+基于CentOS8搭建多用户文件共享服务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-text">1 介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-text">2 安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#yum%E5%AE%89%E8%A3%85"><span class="nav-text">2.1 yum安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#systemctl%E5%90%AF%E7%94%A8"><span class="nav-text">2.2 systemctl启用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-text">3 配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%98%B2%E7%81%AB%E5%A2%99"><span class="nav-text">3.1 防火墙</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E8%A7%86%E9%98%B2%E7%81%AB%E5%A2%99%E8%A7%84%E5%88%99"><span class="nav-text">3.1.1 检视防火墙规则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%98%B2%E7%81%AB%E5%A2%99%E6%94%BE%E9%80%9A%E6%9C%8D%E5%8A%A1"><span class="nav-text">3.1.2 防火墙放通服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E9%98%B2%E7%81%AB%E5%A2%99"><span class="nav-text">3.1.3 重新加载防火墙</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E8%A7%86%E9%98%B2%E7%81%AB%E5%A2%99%E8%AE%BE%E7%BD%AE%E7%BB%93%E6%9E%9C"><span class="nav-text">3.1.4 检视防火墙设置结果</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEsamba"><span class="nav-text">3.2 配置samba</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E5%8E%9F%E5%A7%8B%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-text">3.2.1 备份原始配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-text">3.2.2 修改配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E5%90%AFsamba%E6%9C%8D%E5%8A%A1"><span class="nav-text">3.2.3 重启samba服务</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E7%9B%AE%E5%BD%95"><span class="nav-text">3.3 存储目录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E7%94%A8%E6%88%B7"><span class="nav-text">4 多用户</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAlinux%E7%94%A8%E6%88%B7"><span class="nav-text">4.1 创建Linux用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E5%85%A5samba%E7%94%A8%E6%88%B7"><span class="nav-text">4.2 加入samba用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%94%A8%E6%88%B7%E5%85%B1%E4%BA%AB%E7%9B%AE%E5%BD%95"><span class="nav-text">4.3 创建用户共享目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%89%80%E6%9C%89samba%E7%94%A8%E6%88%B7"><span class="nav-text">4.4 查看所有samba用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4samba%E7%94%A8%E6%88%B7"><span class="nav-text">4.5 删除samba用户</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">5 参考资料</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/samba-%E5%9F%BA%E4%BA%8ECentOS8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="samba - 基于CentOS8搭建多用户文件共享服务 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          samba - 基于CentOS8搭建多用户文件共享服务
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-11-18 18:18:16" itemprop="dateCreated datePublished" datetime="2019-11-18T18:18:16+08:00">2019-11-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>在CentOS8上搭建Samba服务，配置实现多用户之间的文件共享和权限隔离。</p>
+<span id="more"></span>
+<h1 id="samba---基于centos8搭建多用户文件共享服务">samba -
+基于CentOS8搭建多用户文件共享服务</h1>
+<p>校园网前阵子对公网流量开始5元10G按量计费了，刚好导师给了台不再使用的07年产的老联想。想起了之前在博世实习的时候，公司共享硬盘挺好用的。所以我安装了CentOS8，并部署了samba，这样就可以在校园网内相互之间共享大文件，无需借助公网，既可以节省校园网的公网流量费，而且内网传输可以做到数据保密。另外，实验室的网络是六类线（CAT6），全千兆的网速传输起来非常快（超过了一般的USB
+3.0）。</p>
+<p>本文介绍如何基于CentOS8搭建samba服务，并配置实现多用户共享，实现用户对自己目录可读可写，用户对他人目录可读不可写的权限隔离。</p>
+<p>另外，CentOS8自带了<a
+target="_blank" rel="noopener" href="https://cockpit-project.org/">cocopit</a>，挺好用的Web管理平台。本文涉及的SELinux、防火墙、用户管理操作都可以用cocopit实现。</p>
+<h2 id="介绍">1 介绍</h2>
+<blockquote>
+<p>官方网站：<a target="_blank" rel="noopener" href="https://www.samba.org/">Samba.org</a></p>
+<p><strong>About Samba</strong></p>
+<p><strong>Samba is the standard Windows interoperability suite of
+programs for Linux and Unix.</strong></p>
+<p>Samba is <a target="_blank" rel="noopener" href="https://www.gnu.org/philosophy/free-sw.html">Free
+Software</a> licensed under the <a
+target="_blank" rel="noopener" href="https://www.samba.org/samba/docs/GPL.html">GNU General Public
+License</a>, the Samba project is a member of the <a
+target="_blank" rel="noopener" href="https://www.sfconservancy.org/">Software Freedom
+Conservancy</a>.</p>
+<p>Since <a
+target="_blank" rel="noopener" href="https://www.samba.org/samba/docs/10years.html">1992</a>, Samba has
+provided secure, stable and fast file and print services for all clients
+using the SMB/CIFS protocol, such as all versions of DOS and Windows,
+OS/2, Linux and many others.</p>
+<p>Samba is an important component to seamlessly integrate Linux/Unix
+Servers and Desktops into Active Directory environments. It can function
+both as a domain controller or as a regular domain member.</p>
+</blockquote>
+<h2 id="安装">2 安装</h2>
+<h3 id="yum安装">2.1 yum安装</h3>
+<p>首先，安装samba：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install samba</span><br></pre></td></tr></table></figure>
+<h3 id="systemctl启用">2.2 systemctl启用</h3>
+<p>安装完成后，设置samba为启用（enable），这样samba就可以开机自启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> smb</span><br></pre></td></tr></table></figure>
+<ul>
+<li>samba的服务名为<code>smb</code></li>
+</ul>
+<h2 id="配置">3 配置</h2>
+<h3 id="防火墙">3.1 防火墙</h3>
+<p>安装完成后，需要为samba服务打开防火墙。</p>
+<p>CentOS8采用的不再是<code>iptables</code>，而是<code>firewall</code>。</p>
+<h4 id="检视防火墙规则">3.1.1 检视防火墙规则</h4>
+<p>可以查看samba服务对应的防火墙信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo firewall-cmd --info-service samba</span><br></pre></td></tr></table></figure>
+<p>显示形如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">samba</span><br><span class="line">  ports: 137/udp 138/udp 139/tcp 445/tcp</span><br><span class="line">  protocols:</span><br><span class="line">  source-ports:</span><br><span class="line">  modules: netbios-ns</span><br><span class="line">  destination:</span><br></pre></td></tr></table></figure>
+<h4 id="防火墙放通服务">3.1.2 防火墙放通服务</h4>
+<p>确认信息后，在防火墙中放通samba服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo firewall-cmd --permanent --add-service=samba</span><br></pre></td></tr></table></figure>
+<h4 id="重新加载防火墙">3.1.3 重新加载防火墙</h4>
+<p>设置为<code>--permanent</code>后，需要重新载入防火墙，使配置生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+<h4 id="检视防火墙设置结果">3.1.4 检视防火墙设置结果</h4>
+<p>重新载入完成后，可以检视防火墙是否已加入samba服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo firewall-cmd --list-services</span><br></pre></td></tr></table></figure>
+<p>显示形如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cockpit dhcpv6-client http samba ssh</span><br></pre></td></tr></table></figure>
+<ul>
+<li>包含samba</li>
+</ul>
+<h3 id="配置samba">3.2 配置samba</h3>
+<p>对samba的配置文件进行设置，配置文件位于<code>/etc/samba/smb.conf</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /etc/samba/</span><br></pre></td></tr></table></figure>
+<h4 id="备份原始配置文件">3.2.1 备份原始配置文件</h4>
+<p>首先，备份原始配置文件以便恢复：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">cp</span> smb.conf smb.conf.bkup</span><br></pre></td></tr></table></figure>
+<h4 id="修改配置文件">3.2.2 修改配置文件</h4>
+<p>随后，修改配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim smb.conf</span><br></pre></td></tr></table></figure>
+<p>我增加了一个名为Share的section，且设置为可读、可浏览、可写，这意味着每个用户登陆后都会看到一个名为Share的文件夹：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Share]</span></span><br><span class="line">	<span class="attr">comment</span> = Share (read-and-write for own, read-<span class="literal">on</span>ly for others)</span><br><span class="line">	<span class="attr">path</span> = /home/samba/share/</span><br><span class="line">	<span class="attr">writable</span> = <span class="literal">yes</span></span><br><span class="line">	<span class="attr">browseable</span> = <span class="literal">yes</span></span><br><span class="line">	<span class="attr">public</span> = <span class="literal">yes</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>修改后完整的配置文件如下，供参考：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># See smb.conf.example for a more detailed config file or</span></span><br><span class="line"><span class="comment"># read the smb.conf manpage.</span></span><br><span class="line"><span class="comment"># Run &#x27;testparm&#x27; to verify the config is correct after</span></span><br><span class="line"><span class="comment"># you modified it.</span></span><br><span class="line"></span><br><span class="line"><span class="section">[global]</span></span><br><span class="line"> 	<span class="attr">workgroup</span> = WORKGROUP</span><br><span class="line">	<span class="attr">security</span> = user</span><br><span class="line"></span><br><span class="line">	passdb <span class="attr">backend</span> = tdbsam</span><br><span class="line"></span><br><span class="line">	<span class="attr">printing</span> = cups</span><br><span class="line">	printcap <span class="attr">name</span> = cups</span><br><span class="line">	load <span class="attr">printers</span> = <span class="literal">yes</span></span><br><span class="line">	cups <span class="attr">options</span> = raw</span><br><span class="line"></span><br><span class="line"><span class="section">[homes]</span></span><br><span class="line">	<span class="attr">comment</span> = Home Directories</span><br><span class="line">	valid <span class="attr">users</span> = %S, %D%w%S</span><br><span class="line">	<span class="attr">browseable</span> = <span class="literal">No</span></span><br><span class="line">	read <span class="attr">only</span> = <span class="literal">No</span></span><br><span class="line">	inherit <span class="attr">acls</span> = <span class="literal">Yes</span></span><br><span class="line"></span><br><span class="line"><span class="section">[printers]</span></span><br><span class="line">	<span class="attr">comment</span> = All Printers</span><br><span class="line">	<span class="attr">path</span> = /var/tmp</span><br><span class="line">	<span class="attr">printable</span> = <span class="literal">Yes</span></span><br><span class="line">	create <span class="attr">mask</span> = <span class="number">0600</span></span><br><span class="line">	<span class="attr">browseable</span> = <span class="literal">No</span></span><br><span class="line"></span><br><span class="line"><span class="section">[print$]</span></span><br><span class="line">	<span class="attr">comment</span> = Printer Drivers</span><br><span class="line">	<span class="attr">path</span> = /var/lib/samba/drivers</span><br><span class="line">	write <span class="attr">list</span> = @printadmin root</span><br><span class="line">	force <span class="attr">group</span> = @printadmin</span><br><span class="line">	create <span class="attr">mask</span> = <span class="number">0664</span></span><br><span class="line">	directory <span class="attr">mask</span> = <span class="number">0775</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Share]</span></span><br><span class="line">	<span class="attr">comment</span> = Share (read-and-write for own, read-<span class="literal">on</span>ly for others)</span><br><span class="line">	<span class="attr">path</span> = /home/samba/share/</span><br><span class="line">	<span class="attr">writable</span> = <span class="literal">yes</span></span><br><span class="line">	<span class="attr">browseable</span> = <span class="literal">yes</span></span><br><span class="line">	<span class="attr">public</span> = <span class="literal">yes</span></span><br><span class="line">	</span><br></pre></td></tr></table></figure>
+<h4 id="重启samba服务">3.2.3 重启samba服务</h4>
+<p>修改完成后，为使配置文件生效，需要重启samba服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart smb</span><br></pre></td></tr></table></figure>
+<p>或</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service smb restart</span><br></pre></td></tr></table></figure>
+<h3 id="存储目录">3.3 存储目录</h3>
+<p>因为Linux的权限管理中，出于安全考虑，每个用户的目录是无法被其它用户读取的，只有用户自己的<code>rwx</code>权限，而因为硬盘挂载的原因，<code>/home</code>目录是独立挂载分区的，容量大，而诸如<code>/var</code>这类公共目录都挂载在<code>/</code>根目录下，容量仅50GB。</p>
+<p>因此，为了实现多用户的共享，且充分利用硬盘空间，我的方案是创建一个公共用户<code>samba</code>用于存储共享目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo adduser samba</span><br></pre></td></tr></table></figure>
+<p>为了共享，需要使samba目录能够被其它用户浏览，需要添加权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">chmod</span> 755 /home/samba</span><br></pre></td></tr></table></figure>
+<p>在<code>samba</code>的目录<code>/home/samba</code>下，建立公共的共享目录<code>/home/samba/share</code>，并确保其权限被其他用户可读：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> /home/samba/share</span><br><span class="line">sudo <span class="built_in">chmod</span> 755 /home/samba/share</span><br></pre></td></tr></table></figure>
+<p><strong>注意：因为目录在<code>/home</code>下，SELinux有严格的权限控制，会拦截访问，我就采取简单的做法，关闭SELinux。</strong></p>
+<p>当然，也可以对SELinux进行配置，参考：<a
+target="_blank" rel="noopener" href="https://linuxconfig.org/install-samba-on-redhat-8">How to install
+and configure samba on RHEL 8 / CentOS 8</a></p>
+<h2 id="多用户">4 多用户</h2>
+<p>samba的多用户基于Linux的用户，因此，首先需要创建Linux用户。</p>
+<h3 id="创建linux用户">4.1 创建Linux用户</h3>
+<p>通过<code>adduser</code>创建Linux用户，如<code>mike</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo adduser mike</span><br></pre></td></tr></table></figure>
+<p>如果不打算给用户私有目录和登陆权限，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo adduser -M mike -s /sbin/nologin</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>-M</code>表示<code>--no-create-home</code></li>
+<li><code>-s /sbin/nologin</code> 无登陆权限</li>
+</ul>
+<h3 id="加入samba用户">4.2 加入samba用户</h3>
+<p>随后，把Linux用户<code>mike</code>加入samba用户，并初始化设置密码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo smbpasswd -a mike</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>-a</code>权限表示把用户加入到samba用户列表中。</li>
+</ul>
+<h3 id="创建用户共享目录">4.3 创建用户共享目录</h3>
+<p>在3.3节介绍的<code>/home/samba/share</code>目录中，创建用户目录，如<code>mike</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/samba/share</span><br><span class="line">sudo <span class="built_in">mkdir</span> mike</span><br><span class="line">sudo <span class="built_in">chown</span> -Rf mike:mike mike/</span><br></pre></td></tr></table></figure>
+<ul>
+<li>把用户共享目录的所属用户/组都交给用户，这样可以实现其他用户可读不可写，用户自己可读可写的权限隔离。</li>
+</ul>
+<h3 id="查看所有samba用户">4.4 查看所有samba用户</h3>
+<blockquote>
+<p>pdbedit - manage the SAM database (Database of Samba Users)</p>
+</blockquote>
+<p>通过pdbedit命令可以管理samba用户的数据库，当然也就可以查看samba用户。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pdbedit -L</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>-L</code>与<code>--list</code>相同，表示列出全部用户。</li>
+</ul>
+<h3 id="删除samba用户">4.5 删除samba用户</h3>
+<p>按照创建时的操作，将Linux用户<code>mike</code>从samba用户列表中删除：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo smbpasswd -x mike</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>-x</code>表示删除本地samba用户表中的用户。</li>
+</ul>
+<p>删除Linux用户的操作按操作系统提供的命令（如：<code>userdel</code>）或其他管理方式即可，此处不再赘述。</p>
+<h2 id="参考资料">5 参考资料</h2>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://linuxconfig.org/install-samba-on-redhat-8">How to
+install and configure samba on RHEL 8 / CentOS 8</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/samba-%E5%9F%BA%E4%BA%8ECentOS8%E6%90%AD%E5%BB%BA%E5%A4%9A%E7%94%A8%E6%88%B7%E6%96%87%E4%BB%B6%E5%85%B1%E4%BA%AB%E6%9C%8D%E5%8A%A1/" title="samba - 基于CentOS8搭建多用户文件共享服务">https://heary.cn/posts/samba-基于CentOS8搭建多用户文件共享服务/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Deploy/" rel="tag"><i class="fa fa-tag"></i> Deploy</a>
+              <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+              <a href="/tags/Samba/" rel="tag"><i class="fa fa-tag"></i> Samba</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/SEULogin-%E9%80%82%E7%94%A8%E4%BA%8E%E4%B8%9C%E5%8D%97%E5%A4%A7%E5%AD%A6DrCOM%E7%BD%91%E5%85%B3%E7%9A%84Shell%E8%AE%A4%E8%AF%81%E5%B7%A5%E5%85%B7/" rel="prev" title="SEULogin - 适用于东南大学DrCOM网关的Shell认证工具">
+                  <i class="fa fa-chevron-left"></i> SEULogin - 适用于东南大学DrCOM网关的Shell认证工具
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E5%AE%9E%E7%8E%B0QQ%E8%87%AA%E5%8A%A8%E5%AF%B9%E8%AF%9D%E6%9C%BA%E5%99%A8%E4%BA%BA/" rel="next" title="实现QQ自动对话机器人">
+                  实现QQ自动对话机器人 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"941c0d28e48f2c5ddc52d599a46a0f5d"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

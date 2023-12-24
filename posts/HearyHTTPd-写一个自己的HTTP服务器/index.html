@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="自己研究用Java写一个HTTP服务器。一看JHTTPd，EasyHTTPd这些名字就用过了，那就叫HearyHTTPd吧，简称hhttpd。构想是做一个基于Reactor的多线程高并发HTTP服务器。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HearyHTTPd - 写一个自己的HTTP服务器">
+<meta property="og:url" content="https://heary.cn/posts/HearyHTTPd-%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="自己研究用Java写一个HTTP服务器。一看JHTTPd，EasyHTTPd这些名字就用过了，那就叫HearyHTTPd吧，简称hhttpd。构想是做一个基于Reactor的多线程高并发HTTP服务器。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-06-17T09:11:38.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.606Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="Socket">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="NIO">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/HearyHTTPd-%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/HearyHTTPd-%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/","path":"posts/HearyHTTPd-写一个自己的HTTP服务器/","title":"HearyHTTPd - 写一个自己的HTTP服务器"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HearyHTTPd - 写一个自己的HTTP服务器 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#hearyhttpd---%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84http%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-text">HearyHTTPd -
+写一个自己的HTTP服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E6%BA%90%E5%9C%B0%E5%9D%80"><span class="nav-text">1 开源地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E6%97%A5%E8%AE%B0"><span class="nav-text">2 开发日记</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#day-1-2020.6.15-mon"><span class="nav-text">Day 1, 2020.6.15, Mon</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-2-2020.6.16-tue"><span class="nav-text">Day 2, 2020.6.16, Tue</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-3-2020.6.17-wed"><span class="nav-text">Day 3, 2020.6.17, Wed</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-4-2020.6.18-thu"><span class="nav-text">Day 4, 2020.6.18, Thu</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-5-2020.6.19-fri"><span class="nav-text">Day 5, 2020.6.19, Fri</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-6-2020.6.20-sat"><span class="nav-text">Day 6, 2020.6.20, Sat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-7-2020.6.21-sun"><span class="nav-text">Day 7, 2020.6.21, Sun</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-8-2020.6.22-mon"><span class="nav-text">Day 8, 2020.6.22, Mon</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#day-9-2020.6.23-tue"><span class="nav-text">Day 9, 2020.6.23, Tue</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/HearyHTTPd-%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HearyHTTPd - 写一个自己的HTTP服务器 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HearyHTTPd - 写一个自己的HTTP服务器
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-06-17 17:11:38" itemprop="dateCreated datePublished" datetime="2020-06-17T17:11:38+08:00">2020-06-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>自己研究用Java写一个HTTP服务器。一看JHTTPd，EasyHTTPd这些名字就用过了，那就叫<a
+target="_blank" rel="noopener" href="https://github.com/HearyShen/HearyHTTPd">HearyHTTPd</a>吧，简称<strong>hhttpd</strong>。构想是做一个基于Reactor的多线程高并发HTTP服务器。</p>
+<span id="more"></span>
+<h1 id="hearyhttpd---写一个自己的http服务器">HearyHTTPd -
+写一个自己的HTTP服务器</h1>
+<p>先写下开发日记，记录每天的进展和心得。</p>
+<h2 id="开源地址">1 开源地址</h2>
+<p>GitHub：<a target="_blank" rel="noopener" href="https://github.com/HearyShen">HearyShen</a> / <a
+target="_blank" rel="noopener" href="https://github.com/HearyShen/HearyHTTPd">HearyHTTPd</a></p>
+<h2 id="开发日记">2 开发日记</h2>
+<h3 id="day-1-2020.6.15-mon">Day 1, 2020.6.15, Mon</h3>
+<p>先从最简单的例子看起，廖雪峰写的的Java教程 <a
+target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/1252599548343744/1304265903570978">Web基础</a>
+中的最基本的HTTP代码跑起来看看效果。这个例子的原理是：用ServerSocket监听端口，主线程阻塞直到接受（accept）到请求，接收到请求后，启动一个线程来处理这个Socket对象，读取输入流以解析请求，写入输出流以进行响应。</p>
+<p>我进行了改进，实现了MainReactor和SubReactor的模式。</p>
+<ul>
+<li>MainReactor负责监听和接受请求，只负责将Socket对象加入（put）到BlockingQueue中；</li>
+<li>SubReactor负责处理请求，做出响应，负责从BlockingQueue中取出（take）请求的Socket对象，读取输入流进行解析，写入输出流进行响应。</li>
+</ul>
+<p>设计一个Launcher来初始化数据结构，启动MainReactor和SubReactor线程。</p>
+<p>第一天只实现了一个MainReactor线程和一个SubReactor线程，处理能力也只是响应"Hello,
+World."。初步把基本的脚手架搭起来，跑通了。</p>
+<h3 id="day-2-2020.6.16-tue">Day 2, 2020.6.16, Tue</h3>
+<p>第二天想到<a
+href="https://heary.cn">我写的Hexo博客</a>就是一个静态网站，完全可以用自己写的HTTP服务器来部署呀。</p>
+<p>于是自己写了一个GET请求处理功能，能够根据请求的路径来读取WebRoot路径下的本地文件，响应给浏览器。</p>
+<p>不过初步的效果只能返回HTML文件，也就是说文本型的CSS、Javascript文件，二进制型的字体文件、图像文件还无法正常返回。需要进一步处理Content-Type，并实现二进制文件的响应功能。</p>
+<p>不巧的是今天遇到一些别的琐事，下午和晚上都被占用了，没来得及做下去。</p>
+<h3 id="day-3-2020.6.17-wed">Day 3, 2020.6.17, Wed</h3>
+<p>今天对模块分工进行了重新构思和命名，分为：</p>
+<ul>
+<li>Reactor包
+<ul>
+<li>包含MainReactor和SubReactor，是Reactor线程的实现；</li>
+</ul></li>
+<li>Processor包
+<ul>
+<li>包含GetProcessor等，提供对HTTP的GET方法进行整体处理的功能；</li>
+</ul></li>
+<li>Resolver包
+<ul>
+<li>包含RequestLineResolver、HeaderResolver，提供对报文请求行、请求头部的内容解析的功能；</li>
+</ul></li>
+<li>Responser包
+<ul>
+<li>包含TextResponser、BinaryResponser和NotFoundResponser。Processor对请求解析根据Content-Type进行分流，交给对应的Responser进行处理和响应。</li>
+</ul></li>
+</ul>
+<p>今天整理好了常用的Content-Type，实现了BinaryResponser来处理二进制对象的请求，实现了多线程的SubReactor，并且改进了RequestLineResolver来提升对带参请求的兼容性。</p>
+<p>接下来打算研究下NIO，提高IO效率。</p>
+<h3 id="day-4-2020.6.18-thu">Day 4, 2020.6.18, Thu</h3>
+<p>今天研究了下NIO，并且写了一份基于NIO的请求-响应双向Socket通信的验证代码。</p>
+<p>笔记记录在：<a
+href="https://heary.cn/posts/%E5%9F%BA%E4%BA%8ENIO%E7%9A%84%E8%AF%B7%E6%B1%82-%E5%93%8D%E5%BA%94%E5%8F%8C%E5%90%91Socket%E9%80%9A%E4%BF%A1%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">基于NIO的请求-响应双向Socket通信网络编程</a></p>
+<p>接下来要基于NIO的<code>ServerSocketChannel</code> /
+<code>SocketChannel</code>以及<code>Selector</code>的IO复用技术对hhttpd进行改进。</p>
+<p>初步构思基于NIO的hhttpd应该是一个MainReactor通过IO复用处理请求，将接收到的请求交给一个SubReactor，SubReactor通过IO复用处理可读请求，将其交给线程池进行处理（read/decode/compute/encode/response）。</p>
+<p>简单例子是，比如说：client请求index.html，mainReactor
+select到这个acceptable的serverSocketChannel，就accept它建立一个socketChannel，register到subReactor的selector上，client的请求数据发到server后，subReactor就能select到readable&amp;writable的socketChannel，于是将这个socketChannel交给threadPool去处理，由worker
+thread去read/decode/compute/encode/write。</p>
+<h3 id="day-5-2020.6.19-fri">Day 5, 2020.6.19, Fri</h3>
+<p>今天把项目进行了改写，全面基于Java的NIO。</p>
+<p>层次架构可分为：</p>
+<ul>
+<li><p>MainReactor (single thread)</p></li>
+<li><p>SubReactor (single thread)</p>
+<ul>
+<li>HttpWorker (Runnable in thread pool)
+<ul>
+<li>GetProcesser
+<ul>
+<li>TextResponser</li>
+<li>BinaryResponser</li>
+<li>NotFoundResponser</li>
+<li>etc.</li>
+</ul></li>
+<li>PostProcesser</li>
+<li>etc.</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>一些注意点：</p>
+<p><strong>注册新SocketChannel后唤醒SubReactor</strong>：MainReactor将accept的SocketChannel注册到SubReactor上后，SubReactor线程阻塞在<code>select()</code>操作处，需要通过<code>selector.wakeUp()</code>来唤醒阻塞，让SubReactor重新select得到新resigter上去的socketChannel；</p>
+<p><strong>处理SocketChannel时要取消其在SubReactor的Selector上的注册以免重复</strong>：SubReactor在select得到Readable的SocketChannel后，应该调用<code>selectionKey.cancel()</code>来取消注册该socketChannel，否则该通道在worker
+thread处理完毕将其关闭之前，会一直保持Readable状态，以至于被SubReactor反复重复地select出来，并启动很多woker
+thread去处理同一个socketChannel，不仅严重耗费资源，而且第一个执行完毕的线程关闭该socketChannel后，后续的其他线程就无法再读取该socketChannel，由此还会出现IOException异常。</p>
+<p><strong>读写NIO的ByteBuffer时要注意offset和length</strong>：检查好文档中的offset指的是谁的offset，读写的length必须<code>Math.min(buffer.remaining(), bytesLen)</code>，即必须是内容长度和buffer长度两者中的最小值。</p>
+<p>但是，我发现改写后，在Chrome浏览器的开发者工具中进行了验证，发现网络流耗时反而更长了。用NIO之前，基于Socket和输入输出流的每个资源文件的耗时大约50ms，可是使用NIO后，反而耗时高达300ms。这个反常现象需要进一步排查。</p>
+<h3 id="day-6-2020.6.20-sat">Day 6, 2020.6.20, Sat</h3>
+<p>使用NIO后反而变慢了一个数量级，这个问题让人费解。</p>
+<p>我怀疑是否是Selector机制太慢了？因此尝试了不含Selector的阻塞式ServerSocketChannel，但是没有改善效果。</p>
+<p>我还尝试了修改唤醒SubReactor的时机，调整线程池的类型和参数、排查通信过程中建立的每一个连接……，但可惜的时都无济于事。</p>
+<p>就在我一筹莫展的时候，我发现我是习惯性用 http://localhost:8080
+访问的，我觉得会不会和localhost的解析有关，因此尝试使用
+http://127.0.0.1:8080
+访问，发现就一切正常了。也就是说，当hhttpd代码里设置为监听的host为<code>127.0.0.1</code>时，在Chrome中用
+http://localhost:8080 会有较大initial connection
+lantency从而变得较慢，而用 http://127.0.0.1:8080 访问则很快。</p>
+<p>事实上，当我做了更多的测试后，我发现和浏览器实现也有关。例如：不管监听或访问如何设置，Firefox浏览器总是很快。</p>
+<p>详细排查结果记录在了：<a
+href="https://heary.cn/posts/Chromium%E5%86%85%E6%A0%B8%E6%B5%8F%E8%A7%88%E5%99%A8%E8%AE%BF%E9%97%AElocalhost%E6%97%B6%E7%9A%84%E5%88%9D%E5%A7%8B%E8%BF%9E%E6%8E%A5%EF%BC%88initial-connection%EF%BC%89%E9%AB%98%E5%BB%B6%E8%BF%9F%E9%97%AE%E9%A2%98/">Chromium内核浏览器访问localhost时的初始连接（initial
+connection）高延迟问题</a>。</p>
+<h3 id="day-7-2020.6.21-sun">Day 7, 2020.6.21, Sun</h3>
+<p>周日，给自己放个假，懒散的一天。</p>
+<h3 id="day-8-2020.6.22-mon">Day 8, 2020.6.22, Mon</h3>
+<p>准备和参加了招银网络科技的笔试。</p>
+<h3 id="day-9-2020.6.23-tue">Day 9, 2020.6.23, Tue</h3>
+<p>先实现了HTTP HEAD方法的处理响应。</p>
+<p>然后实现了HTTP GET/POST方法的CGI响应功能。</p>
+<ul>
+<li>原理是：通过Java的runtime执行本地程序，利用环境变量传入基于CGI协议的参数，执行本地程序（CGI程序）产生的Process实例的标准输入输出可以传递信息，取得CGI程序的输出结果，把这个结果作为响应报文即可。</li>
+<li>具体地，我写了一个很基本Python的本地CGI程序，输出一个包含HTML页面的报文，显示CGI程序得到的环境变量。</li>
+<li>实际上，Java的Runtime可以以执行命令的方式调用各种形式的程序，CGI程序不仅限于Python。</li>
+</ul>
+<p>相关笔记记录在：<a
+href="https://heary.cn/posts/在Java中执行Python等本地程序（命令）/">在Java中执行Python等本地程序（命令）</a></p>
+<p>另外，还改写了HTTP request
+line的解析方式，改为通过Java的URI类库进行处理，不再自行解析处理。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/HearyHTTPd-%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="HearyHTTPd - 写一个自己的HTTP服务器">https://heary.cn/posts/HearyHTTPd-写一个自己的HTTP服务器/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/HTTP/" rel="tag"><i class="fa fa-tag"></i> HTTP</a>
+              <a href="/tags/Socket/" rel="tag"><i class="fa fa-tag"></i> Socket</a>
+              <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
+              <a href="/tags/NIO/" rel="tag"><i class="fa fa-tag"></i> NIO</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/PyYAML-%E5%9C%A8Python%E4%B8%AD%E4%BD%BF%E7%94%A8YAML/" rel="prev" title="PyYAML - 在Python中使用YAML">
+                  <i class="fa fa-chevron-left"></i> PyYAML - 在Python中使用YAML
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E5%9F%BA%E4%BA%8ENIO%E7%9A%84%E8%AF%B7%E6%B1%82-%E5%93%8D%E5%BA%94%E5%8F%8C%E5%90%91Socket%E9%80%9A%E4%BF%A1%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" rel="next" title="基于NIO的请求-响应双向Socket通信网络编程">
+                  基于NIO的请求-响应双向Socket通信网络编程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"63b5c2fe4b4f9e380c53740df7b24833"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

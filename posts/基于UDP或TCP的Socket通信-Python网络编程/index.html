@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="通过Python，可以便捷地进行基于UDP或TCP的Socket网络通信。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于UDP或TCP的Socket通信 - Python网络编程">
+<meta property="og:url" content="https://heary.cn/posts/%E5%9F%BA%E4%BA%8EUDP%E6%88%96TCP%E7%9A%84Socket%E9%80%9A%E4%BF%A1-Python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="通过Python，可以便捷地进行基于UDP或TCP的Socket网络通信。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-07-27T11:20:01.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.881Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Socket">
+<meta property="article:tag" content="Network">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/%E5%9F%BA%E4%BA%8EUDP%E6%88%96TCP%E7%9A%84Socket%E9%80%9A%E4%BF%A1-Python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/%E5%9F%BA%E4%BA%8EUDP%E6%88%96TCP%E7%9A%84Socket%E9%80%9A%E4%BF%A1-Python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/","path":"posts/基于UDP或TCP的Socket通信-Python网络编程/","title":"基于UDP或TCP的Socket通信 - Python网络编程"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>基于UDP或TCP的Socket通信 - Python网络编程 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Eudp%E6%88%96tcp%E7%9A%84socket%E9%80%9A%E4%BF%A1---python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B"><span class="nav-text">基于UDP或TCP的Socket通信
+- Python网络编程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#udp"><span class="nav-text">1 UDP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#udpclient.py"><span class="nav-text">1.1 UDPClient.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#udpserver.py"><span class="nav-text">1.2 UDPServer.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E9%83%A8%E7%BD%B2"><span class="nav-text">1.3 服务器端部署</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tcp"><span class="nav-text">2 TCP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#tcpclient.py"><span class="nav-text">2.1 TCPClient.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tcpserver.py"><span class="nav-text">2.2 TCPServer.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E9%83%A8%E7%BD%B2-1"><span class="nav-text">2.3 服务器端部署</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/%E5%9F%BA%E4%BA%8EUDP%E6%88%96TCP%E7%9A%84Socket%E9%80%9A%E4%BF%A1-Python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="基于UDP或TCP的Socket通信 - Python网络编程 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于UDP或TCP的Socket通信 - Python网络编程
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-07-27 19:20:01" itemprop="dateCreated datePublished" datetime="2017-07-27T19:20:01+08:00">2017-07-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>通过Python，可以便捷地进行基于UDP或TCP的Socket网络通信。</p>
+<span id="more"></span>
+<h1
+id="基于udp或tcp的socket通信---python网络编程">基于UDP或TCP的Socket通信
+- Python网络编程</h1>
+<blockquote>
+<p>本文内容整理自 James F. Kurose, Keith W. Ross <em>Computer
+Networking: A Top-Down Approach (sixth edition)</em></p>
+</blockquote>
+<ul>
+<li>原书内容是Python2的兼容代码，根据我的开发环境，做了少许修改以便兼容Python3。</li>
+<li>经测试在Python3.5环境下可顺利执行。</li>
+</ul>
+<h2 id="udp">1 UDP</h2>
+<h3 id="udpclient.py">1.1 UDPClient.py</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line">serverName = <span class="string">&#x27;www.heary.cn&#x27;</span>     <span class="comment"># 目标域名或IP地址</span></span><br><span class="line">serverPort = <span class="number">12000</span>              <span class="comment"># 目标端口号</span></span><br><span class="line">clientSocket = socket(AF_INET, SOCK_DGRAM)  <span class="comment"># AF_INET指示协议簇（AF, Address Family）, (DGRAM, Datagram)</span></span><br><span class="line">message = <span class="built_in">input</span>(<span class="string">&#x27;Input lowercase sentence:&#x27;</span>)    <span class="comment"># input返回str类型</span></span><br><span class="line">clientSocket.sendto(message.encode(), (serverName, serverPort)) <span class="comment"># bytes = str.encode()</span></span><br><span class="line">modifiedMessage, serverAddress = clientSocket.recvfrom(<span class="number">2048</span>)    <span class="comment"># serverAddress包含IP和port</span></span><br><span class="line"><span class="built_in">print</span>(modifiedMessage)</span><br><span class="line">clientSocket.close()    <span class="comment"># 关闭socket，继而关闭进程</span></span><br></pre></td></tr></table></figure>
+<h3 id="udpserver.py">1.2 UDPServer.py</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line">serverPort = <span class="number">12000</span></span><br><span class="line">serverSocket = socket(AF_INET, SOCK_DGRAM)  <span class="comment"># 创建socket时，port是从1024~65535中自动分配的</span></span><br><span class="line">serverSocket.bind((<span class="string">&#x27;&#x27;</span>, serverPort))         <span class="comment"># 将该socket与指定port绑定，服务器端提供固定port以便访问</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;The server is ready to receive&quot;</span>)</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    message, clientAddress = serverSocket.recvfrom(<span class="number">2048</span>)    <span class="comment"># 取缓存长度2048作为输入</span></span><br><span class="line">    modifiedMessage = message.decode().upper()      <span class="comment"># str = bytes.decode()</span></span><br><span class="line">    serverSocket.sendto(modifiedMessage, clientAddress)</span><br></pre></td></tr></table></figure>
+<h3 id="服务器端部署">1.3 服务器端部署</h3>
+<p>测试需要，我在云服务器端通过<strong>screen</strong>创建一个新的screen
+socket：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">screen -S UDPServer</span><br></pre></td></tr></table></figure>
+<p>在新的screen中，运行UDPServer.py：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python UDPServer.py</span><br></pre></td></tr></table></figure>
+<p>此时，服务器端的监听进程已经开始工作，通过<code>netstat</code>可以查看网络通信端口信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netstat -an | grep 12000</span><br></pre></td></tr></table></figure>
+<p>可以看到结果显示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-49-193-ubuntu:~$ netstat -an | grep 12000</span><br><span class="line">udp        0      0 0.0.0.0:12000           0.0.0.0:*  </span><br></pre></td></tr></table></figure>
+<ul>
+<li>本机本地IP的12000端口开启，为UDP协议。</li>
+</ul>
+<hr />
+<h2 id="tcp">2 TCP</h2>
+<h3 id="tcpclient.py">2.1 TCPClient.py</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line">serverName = <span class="string">&#x27;www.heary.cn&#x27;</span></span><br><span class="line">serverPort = <span class="number">12000</span></span><br><span class="line">clientSocket = socket(AF_INET, SOCK_STREAM)     <span class="comment"># AF_INET指示底层使用IPv4, SOCK_STREAM指示TCP套接字</span></span><br><span class="line">clientSocket.connect((serverName, serverPort))  <span class="comment"># 执行三次握手，建立TCP连接</span></span><br><span class="line">sentence = <span class="built_in">input</span>(<span class="string">&#x27;Input lowercase sentence:&#x27;</span>)</span><br><span class="line">clientSocket.send(sentence.encode())    <span class="comment"># TCP socket基于连接，且已连接至服务器，直接send即可</span></span><br><span class="line">modifiedSentence = clientSocket.recv(<span class="number">1024</span>)</span><br><span class="line"><span class="built_in">print</span>(modifiedSentence)</span><br><span class="line">clientSocket.close()</span><br></pre></td></tr></table></figure>
+<h3 id="tcpserver.py">2.2 TCPServer.py</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line">serverPort = <span class="number">12000</span></span><br><span class="line">serverSocket = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">serverSocket.bind((<span class="string">&#x27;&#x27;</span>, serverPort))     <span class="comment"># 将该socket与指定port绑定，服务器端提供固定port以便访问</span></span><br><span class="line">serverSocket.listen(<span class="number">1</span>)      <span class="comment"># 定义TCP最大请求连接数为1 （该参数最小为1）</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;The server is ready to receive&quot;</span>)</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    connectionSocket, addr = serverSocket.accept()  <span class="comment"># 用于请求建立TCP连接时，服务器段调用accept，即可完成三次握手协议，建立TCP通信Socket:connectionSocket</span></span><br><span class="line">    sentence = connectionSocket.recv(<span class="number">1024</span>)</span><br><span class="line">    capitalizedSentence = sentence.decode().upper()</span><br><span class="line">    connectionSocket.send(capitalizedSentence.encode())</span><br><span class="line">    connectionSocket.close()    <span class="comment"># 通信完成后，通信连接关闭（但监听连接持续存在）</span></span><br></pre></td></tr></table></figure>
+<h3 id="服务器端部署-1">2.3 服务器端部署</h3>
+<p>操作内容同上<strong><em>1.3</em></strong></p>
+<p>补充：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-49-193-ubuntu:~$ netstat -an | grep 12000</span><br><span class="line">tcp        0      0 0.0.0.0:12000           0.0.0.0:*               LISTEN  </span><br></pre></td></tr></table></figure>
+<ul>
+<li>TCPServer.py执行后，TCP监听进程启动。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-49-193-ubuntu:~$ netstat -an | grep 12000</span><br><span class="line">tcp        0      0 10.105.49.193:12000     42.244.62.236:2538      TIME_WAIT  </span><br></pre></td></tr></table></figure>
+<ul>
+<li>TCP连接关闭，会有一段TIME_WAIT，约几秒钟，过后再检索，会发现该端口已经释放。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/%E5%9F%BA%E4%BA%8EUDP%E6%88%96TCP%E7%9A%84Socket%E9%80%9A%E4%BF%A1-Python%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" title="基于UDP或TCP的Socket通信 - Python网络编程">https://heary.cn/posts/基于UDP或TCP的Socket通信-Python网络编程/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"><i class="fa fa-tag"></i> Python</a>
+              <a href="/tags/Socket/" rel="tag"><i class="fa fa-tag"></i> Socket</a>
+              <a href="/tags/Network/" rel="tag"><i class="fa fa-tag"></i> Network</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3C%E2%80%94%E2%80%94-define%E4%B8%8Etypedef/" rel="prev" title="深入理解C——#define与typedef">
+                  <i class="fa fa-chevron-left"></i> 深入理解C——#define与typedef
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/Visual-Studio-%E5%A4%9A%E7%A7%8D%E6%96%B9%E5%BC%8F%E6%89%93%E5%BC%80%E6%96%87%E4%BB%B6/" rel="next" title="Visual Studio - 多种方式打开文件">
+                  Visual Studio - 多种方式打开文件 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"aa2d0341b415d8bc66d16604aaf2db7d"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="初步学习分布式系统，理解CAP定理与BASE理论。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初识分布式系统：CAP定理与BASE理论">
+<meta property="og:url" content="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="初步学习分布式系统，理解CAP定理与BASE理论。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/CAP_Theorem.png">
+<meta property="article:published_time" content="2020-08-19T08:04:38.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.878Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Distributed System">
+<meta property="article:tag" content="CAP Theorem">
+<meta property="article:tag" content="BASE Theory">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/CAP_Theorem.png">
+
+
+<link rel="canonical" href="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/","path":"posts/初识分布式系统：CAP定理与BASE理论/","title":"初识分布式系统：CAP定理与BASE理论"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>初识分布式系统：CAP定理与BASE理论 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fcap%E5%AE%9A%E7%90%86%E4%B8%8Ebase%E7%90%86%E8%AE%BA"><span class="nav-text">初识分布式系统：CAP定理与BASE理论</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#cap%E5%AE%9A%E7%90%86"><span class="nav-text">1 CAP定理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-text">1.1 背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E7%90%86"><span class="nav-text">1.2 定理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7consistency"><span class="nav-text">1.2.1 一致性（Consistency）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E7%94%A8%E6%80%A7availibity"><span class="nav-text">1.2.2 可用性（Availibity）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%8C%BA%E5%AE%B9%E9%94%99%E6%80%A7partition-torlence"><span class="nav-text">1.2.3 分区容错性（Partition
+torlence）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8"><span class="nav-text">1.3 应用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#base%E7%90%86%E8%AE%BA"><span class="nav-text">2 BASE理论</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF-1"><span class="nav-text">2.1 背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%90%86%E8%AE%BA"><span class="nav-text">2.2 理论</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%8F%AF%E7%94%A8basically-available"><span class="nav-text">2.2.1 基本可用（Basically
+Available）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BD%AF%E7%8A%B6%E6%80%81soft-state"><span class="nav-text">2.2.2 软状态（Soft state）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E6%80%A7eventually-consistent"><span class="nav-text">2.2.3 最终一致性（Eventually
+consistent）</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="初识分布式系统：CAP定理与BASE理论 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          初识分布式系统：CAP定理与BASE理论
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-19 16:04:38" itemprop="dateCreated datePublished" datetime="2020-08-19T16:04:38+08:00">2020-08-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>初步学习分布式系统，理解CAP定理与BASE理论。</p>
+<span id="more"></span>
+<h1
+id="初识分布式系统cap定理与base理论">初识分布式系统：CAP定理与BASE理论</h1>
+<p>传统单机事务模型难以应对分布式事务的处理需求，需要分布式系统。分布式系统的节点分布在网络中，难以像传统的集中式事务处理系统那样实现严格的ACID特性。</p>
+<h2 id="cap定理">1 CAP定理</h2>
+<h3 id="背景">1.1 背景</h3>
+<p>2000年7月，加州大学伯克利分校Eric Brewer教授在ACM PODC (Principles of
+Distributed Computing)会议上提出了CAP猜想。</p>
+<p>2年后，麻省理工学院的Seth Gilbert和Nancy
+Lynch从理论上证明了CAP猜想的可行性，从此CAP定理成为分布式计算领域的公认定理。</p>
+<h3 id="定理">1.2 定理</h3>
+<p><strong>CAP定理</strong>：一个分布式系统不可能同时满足一致性（Consistency）、可用性（Availiability）与分区容错性（Partition
+torlence）这三个基本需求，最多智能同时满足其中两项。</p>
+<img src="/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/CAP_Theorem.png" class="" title="CAP Theorem">
+<h4 id="一致性consistency">1.2.1 一致性（Consistency）</h4>
+<p>一致性指的是多副本之间的一致性。分布式系统场景下，一个副本更新后，其他副本如果没有及时更新，那从其他副本上读取到的数据仍然是老数据，即，副本之间的数据出现不一致。</p>
+<p>所有节点在同一时间具有相同的数据。</p>
+<h4 id="可用性availibity">1.2.2 可用性（Availibity）</h4>
+<p>可用性指的是系统提供的服务必须一直处于可用状态，即，对用户请求总是在有限的时间内返回结果。</p>
+<p>每个请求不关成功或是失败都有响应。</p>
+<h4 id="分区容错性partition-torlence">1.2.3 分区容错性（Partition
+torlence）</h4>
+<p>分区容错性指的是分布式系统遇到任何网络分区故障时，仍然能够对外提供满足一致性和可用性的服务，除非整个网络环境都发生了故障。</p>
+<p>系统中任意信息的丢失或失败不影响系统的继续运作。</p>
+<p>注：</p>
+<ul>
+<li>分布式系统中，不同节点分布在不同的子网络，可能出现子网络之间网络断连，但子网络内部正常，使得分布式系统被分割为若干孤立区域。</li>
+<li>组成一个分布式系统的每个节点的加入和退出，都可以看成时一个特殊的网络分区。</li>
+</ul>
+<h3 id="应用">1.3 应用</h3>
+<p>根据CAP定理，分布式系统在应用中必须作出取舍，只能满足最多两个性质，意味着必须选择放弃一个性质。</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 50%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>放弃性质</th>
+<th>说明</th>
+<th>应用</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CA：放弃分区容错性（-P）</td>
+<td>单点集群系统，放弃分区容错性意味着放弃系统的可扩展性。实现分区容错性，简单的方法是将所有的数据（至少是事务相关的数据）放在一个分布式节点上，这样网络分区问题时，每个子网络都有依赖数据的可用副本。</td>
+<td>RDBMS</td>
+</tr>
+<tr class="even">
+<td>CP：放弃可用性（-A）</td>
+<td>一旦分布式系统遭遇网络分区或其他故障，受影响的服务需要等待一定时间才能恢复对外服务，在这段时间内不可用。满足一致性，分区容忍性的系统，通常性能不是特别高。</td>
+<td>MongoDB, HBase, Redis</td>
+</tr>
+<tr class="odd">
+<td>AP：放弃一致性（-C）</td>
+<td>放弃分布式系统的强一致性，保证分布式系统的最终一致性。引入时间窗口的概念，隔一段时间在不同节点之间复制数据副本。</td>
+<td>CouchDB, Cassandra, DynamoDB, Riak</td>
+</tr>
+</tbody>
+</table>
+<p>具体地，</p>
+<ul>
+<li>CA：放弃分区容错性
+<ul>
+<li>RDBMS：关系型数据库管理系统（Relational Database Management
+System），不具备可扩展性。</li>
+</ul></li>
+<li>CP：放弃可用性
+<ul>
+<li>MongoDB：NoSQL，面向文档（document-oriented）；</li>
+<li>HBase：Hadoop Database，面向列（column-oriented）；</li>
+<li>Redis：Remote Dictionary Server，键值存储；</li>
+</ul></li>
+<li>AP：放弃一致性
+<ul>
+<li>CouchDB：面向文档；</li>
+<li>Cassandra：面向列；</li>
+<li>DynamoDB：面向文档；</li>
+<li>Riak：键值存储；</li>
+</ul></li>
+</ul>
+<h2 id="base理论">2 BASE理论</h2>
+<p>BASE名字取自缩写：</p>
+<ul>
+<li>Basically Available</li>
+<li>Soft state</li>
+<li>Eventually consistent</li>
+</ul>
+<h3 id="背景-1">2.1 背景</h3>
+<p>BASE理论由eBay架构师Dan Prichett在文章BASE: An Acid
+Alternative中首次提出，是对CAP中一致性和可用性权衡的结果。</p>
+<h3 id="理论">2.2 理论</h3>
+<p>BASE理论的核心思想是：即使无法做到强一致性（Strong
+consistency），但每个应用都可以根据自身的业务特点，采用适当的方式来使系统达到最终一致性（Eventual
+consistency）。</p>
+<p>牺牲强一致性来获得可用性。</p>
+<h4 id="基本可用basically-available">2.2.1 基本可用（Basically
+Available）</h4>
+<p>分布式系统在出现不可预知故障时，允许损失部分可用性。</p>
+<p>如：</p>
+<ul>
+<li>响应时间上的损失：出现故障时，响应时间一定程度增加；</li>
+<li>功能上的损失：购物节高峰时，部分用户被引导到一个降级页面。</li>
+</ul>
+<h4 id="软状态soft-state">2.2.2 软状态（Soft state）</h4>
+<p>允许系统中的数据存在中间状态，并认为该中间状态的存在不会影响系统的整体可用性，即允许系统在不同节点的数据副本之间进行数据同步的过程存在延时。</p>
+<h4 id="最终一致性eventually-consistent">2.2.3 最终一致性（Eventually
+consistent）</h4>
+<p>系统中所有的数据副本，经过一段时间同步后，最终能达到一个一致的状态。</p>
+<p>不需要实时一致，达到一致所需的时间延迟，取决于网络延迟、系统负载和数据复制方案设计等因素。</p>
+<p>实际工程实践中，最终一致性存在五类变种：</p>
+<ol type="1">
+<li>因果一致性（Causal
+consistency）：进程A修改数据后通知进程B，进程B读取的数据应该是新值。</li>
+<li>读己之所写（Read your
+writes）：进程A修改后再读取，得到的应该是新值。</li>
+<li>会话一致性（Session
+consistency）；系统保证再同一个有效的会话中实现读己之所写。</li>
+<li>单调读一致性（Monotonic read
+consistency）：进程读到新值后，后续不应该反而读出旧值。</li>
+<li>单调写一致性（Monotonic write
+consistency）：同一个进程的写操作应该顺序执行。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/" title="初识分布式系统：CAP定理与BASE理论">https://heary.cn/posts/初识分布式系统：CAP定理与BASE理论/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Distributed-System/" rel="tag"><i class="fa fa-tag"></i> Distributed System</a>
+              <a href="/tags/CAP-Theorem/" rel="tag"><i class="fa fa-tag"></i> CAP Theorem</a>
+              <a href="/tags/BASE-Theory/" rel="tag"><i class="fa fa-tag"></i> BASE Theory</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/" rel="prev" title="Selector - 从JDK11源码理解Java I/O复用原理">
+                  <i class="fa fa-chevron-left"></i> Selector - 从JDK11源码理解Java I/O复用原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/Redis%E7%AC%94%E8%AE%B0/" rel="next" title="Redis笔记">
+                  Redis笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"84c8db8cee9b10d1eec3815f2e066894"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

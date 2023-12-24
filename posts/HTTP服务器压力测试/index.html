@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="对HearyHTTPd进行压力测试。网上的压力测试工具很多，我测试了Apache benchmark和WebBench两款压力测试工具，并在台式机和实验室计算服务器上分别进行了压力测试，QPS分别约6400+、21000+和30000+。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP服务器压力测试">
+<meta property="og:url" content="https://heary.cn/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="对HearyHTTPd进行压力测试。网上的压力测试工具很多，我测试了Apache benchmark和WebBench两款压力测试工具，并在台式机和实验室计算服务器上分别进行了压力测试，QPS分别约6400+、21000+和30000+。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-30T03:40:50.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.606Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="Benchmark">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/","path":"posts/HTTP服务器压力测试/","title":"HTTP服务器压力测试"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HTTP服务器压力测试 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#http%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="nav-text">HTTP服务器压力测试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#apache-benchmark"><span class="nav-text">1 Apache benchmark</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-text">1.1 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-text">1.2 安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-text">1.3 测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#webbench"><span class="nav-text">2 webBench</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B-1"><span class="nav-text">2.1 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85-1"><span class="nav-text">2.2 安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95-1"><span class="nav-text">2.3 测试</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HTTP服务器压力测试 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP服务器压力测试
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-07-30 11:40:50" itemprop="dateCreated datePublished" datetime="2020-07-30T11:40:50+08:00">2020-07-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>对<a
+target="_blank" rel="noopener" href="https://github.com/HearyShen/HearyHTTPd">HearyHTTPd</a>进行压力测试。网上的压力测试工具很多，我测试了<a
+target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/programs/ab.html">Apache
+benchmark</a>和<a
+target="_blank" rel="noopener" href="https://github.com/EZLippi/WebBench">WebBench</a>两款压力测试工具，并在台式机和实验室计算服务器上分别进行了压力测试，QPS分别约6400+、21000+和30000+。</p>
+<span id="more"></span>
+<h1 id="http服务器压力测试">HTTP服务器压力测试</h1>
+<h2 id="apache-benchmark">1 Apache benchmark</h2>
+<h3 id="简介">1.1 简介</h3>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/programs/ab.html">Apache
+benchmark</a></p>
+<p><strong>ab - Apache HTTP server benchmarking tool</strong></p>
+<p><code>ab</code> is a tool for benchmarking your Apache Hypertext
+Transfer Protocol (HTTP) server. It is designed to give you an
+impression of how your current Apache installation performs. This
+especially shows you how many requests per second your Apache
+installation is capable of serving.</p>
+</blockquote>
+<p>Apache
+benchmark是一款Apache提供的HTTP服务器压力测试工具，随Apache安装。</p>
+<h3 id="安装">1.2 安装</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install apache2-utils</span><br></pre></td></tr></table></figure>
+<h3 id="测试">1.3 测试</h3>
+<p>我测试了我的<a
+target="_blank" rel="noopener" href="https://github.com/HearyShen/HearyHTTPd">HearyHTTPd</a>，用1000个客户机并发请求10万次。</p>
+<p>在我的实验室台式机上进行了测试：</p>
+<ul>
+<li>CPU：Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz</li>
+<li>内存：单通道 8GB DDR4 2400Mhz</li>
+<li>通过WSL中的Ubuntu来测试Windows环境JRE下运行的hhttpd。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">jyshen@JYSHEN-WORKPC:~$ ab -n 100000 -c 1000 http://localhost:8080/</span><br><span class="line">This is ApacheBench, Version 2.3 &lt;<span class="variable">$Revision</span>: 1807734 $&gt;</span><br><span class="line">Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/</span><br><span class="line">Licensed to The Apache Software Foundation, http://www.apache.org/</span><br><span class="line"></span><br><span class="line">Benchmarking localhost (be patient)</span><br><span class="line">Completed 10000 requests</span><br><span class="line">Completed 20000 requests</span><br><span class="line">Completed 30000 requests</span><br><span class="line">Completed 40000 requests</span><br><span class="line">Completed 50000 requests</span><br><span class="line">Completed 60000 requests</span><br><span class="line">Completed 70000 requests</span><br><span class="line">Completed 80000 requests</span><br><span class="line">Completed 90000 requests</span><br><span class="line">Completed 100000 requests</span><br><span class="line">Finished 100000 requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Server Software:</span><br><span class="line">Server Hostname:        localhost</span><br><span class="line">Server Port:            8080</span><br><span class="line"></span><br><span class="line">Document Path:          /</span><br><span class="line">Document Length:        0 bytes</span><br><span class="line"></span><br><span class="line">Concurrency Level:      1000</span><br><span class="line">Time taken <span class="keyword">for</span> tests:   15.595 seconds</span><br><span class="line">Complete requests:      100000</span><br><span class="line">Failed requests:        0</span><br><span class="line">Total transferred:      1300000 bytes</span><br><span class="line">HTML transferred:       0 bytes</span><br><span class="line">Requests per second:    6412.45 [<span class="comment">#/sec] (mean)</span></span><br><span class="line">Time per request:       155.947 [ms] (mean)</span><br><span class="line">Time per request:       0.156 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          81.41 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">Connection Times (ms)</span><br><span class="line">              min  mean[+/-sd] median   max</span><br><span class="line">Connect:       33   78  20.6     78     143</span><br><span class="line">Processing:    29   77  20.8     77     147</span><br><span class="line">Waiting:        4   45  16.8     41     146</span><br><span class="line">Total:         72  155   7.7    154     195</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%    154</span><br><span class="line">  66%    155</span><br><span class="line">  75%    156</span><br><span class="line">  80%    156</span><br><span class="line">  90%    163</span><br><span class="line">  95%    169</span><br><span class="line">  98%    173</span><br><span class="line">  99%    184</span><br><span class="line"> 100%    195 (longest request)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>测得结果平均每秒能处理6412个请求。</li>
+<li>多次测试能稳定在6000以上。</li>
+<li>测试中观察内存和CPU消耗无异常情况。</li>
+<li>其他影响因素：实验过程中，Windows Defender的Antimalware Service
+Executable进程的CPU使用率明显上升，约7~10%。</li>
+</ul>
+<p>另外，我在实验室的新服务器上进行了测试：</p>
+<ul>
+<li>CPU：2颗Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz</li>
+<li>内存：512G（16根32G） ECC DDR4 2666Mhz</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">(base) sjy@h3c-UniServer-R5200-G3:~$ ab -n 100000 -c 1000 http://localhost:8080/</span><br><span class="line">This is ApacheBench, Version 2.3 &lt;<span class="variable">$Revision</span>: 1807734 $&gt;</span><br><span class="line">Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/</span><br><span class="line">Licensed to The Apache Software Foundation, http://www.apache.org/</span><br><span class="line"></span><br><span class="line">Benchmarking localhost (be patient)</span><br><span class="line">Completed 10000 requests</span><br><span class="line">Completed 20000 requests</span><br><span class="line">Completed 30000 requests</span><br><span class="line">Completed 40000 requests</span><br><span class="line">Completed 50000 requests</span><br><span class="line">Completed 60000 requests</span><br><span class="line">Completed 70000 requests</span><br><span class="line">Completed 80000 requests</span><br><span class="line">Completed 90000 requests</span><br><span class="line">Completed 100000 requests</span><br><span class="line">Finished 100000 requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Server Software:        </span><br><span class="line">Server Hostname:        localhost</span><br><span class="line">Server Port:            8080</span><br><span class="line"></span><br><span class="line">Document Path:          /</span><br><span class="line">Document Length:        0 bytes</span><br><span class="line"></span><br><span class="line">Concurrency Level:      1000</span><br><span class="line">Time taken <span class="keyword">for</span> tests:   4.753 seconds</span><br><span class="line">Complete requests:      100000</span><br><span class="line">Failed requests:        0</span><br><span class="line">Total transferred:      1300000 bytes</span><br><span class="line">HTML transferred:       0 bytes</span><br><span class="line">Requests per second:    21041.56 [<span class="comment">#/sec] (mean)</span></span><br><span class="line">Time per request:       47.525 [ms] (mean)</span><br><span class="line">Time per request:       0.048 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          267.13 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">Connection Times (ms)</span><br><span class="line">              min  mean[+/-sd] median   max</span><br><span class="line">Connect:        7   24  63.7     20    1052</span><br><span class="line">Processing:     6   23   6.1     24      49</span><br><span class="line">Waiting:        5   17   5.1     16      44</span><br><span class="line">Total:         21   47  64.3     46    1084</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%     46</span><br><span class="line">  66%     47</span><br><span class="line">  75%     48</span><br><span class="line">  80%     49</span><br><span class="line">  90%     51</span><br><span class="line">  95%     53</span><br><span class="line">  98%     56</span><br><span class="line">  99%     62</span><br><span class="line"> 100%   1084 (longest request)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>测得结果平均每秒能处理21041个请求。</li>
+</ul>
+<p>我还在另一台计算服务器上进行了测试：</p>
+<ul>
+<li>CPU：2颗Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz</li>
+<li>内存：128G（4根32G）ECC DDR4 2666Mhz</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">jyshen@ubuntu:~$ ab -c 1000 -n 100000 http://127.0.0.1:8080/</span><br><span class="line">This is ApacheBench, Version 2.3 &lt;<span class="variable">$Revision</span>: 1706008 $&gt;</span><br><span class="line">Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/</span><br><span class="line">Licensed to The Apache Software Foundation, http://www.apache.org/</span><br><span class="line"></span><br><span class="line">Benchmarking 127.0.0.1 (be patient)</span><br><span class="line">Completed 10000 requests</span><br><span class="line">Completed 20000 requests</span><br><span class="line">Completed 30000 requests</span><br><span class="line">Completed 40000 requests</span><br><span class="line">Completed 50000 requests</span><br><span class="line">Completed 60000 requests</span><br><span class="line">Completed 70000 requests</span><br><span class="line">Completed 80000 requests</span><br><span class="line">Completed 90000 requests</span><br><span class="line">Completed 100000 requests</span><br><span class="line">Finished 100000 requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Server Software:        </span><br><span class="line">Server Hostname:        127.0.0.1</span><br><span class="line">Server Port:            8080</span><br><span class="line"></span><br><span class="line">Document Path:          /</span><br><span class="line">Document Length:        152 bytes</span><br><span class="line"></span><br><span class="line">Concurrency Level:      1000</span><br><span class="line">Time taken <span class="keyword">for</span> tests:   3.296 seconds</span><br><span class="line">Complete requests:      100000</span><br><span class="line">Failed requests:        0</span><br><span class="line">Total transferred:      21500000 bytes</span><br><span class="line">HTML transferred:       15200000 bytes</span><br><span class="line">Requests per second:    30338.50 [<span class="comment">#/sec] (mean)</span></span><br><span class="line">Time per request:       32.961 [ms] (mean)</span><br><span class="line">Time per request:       0.033 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          6369.90 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">Connection Times (ms)</span><br><span class="line">              min  mean[+/-sd] median   max</span><br><span class="line">Connect:        0   16  63.0     13    1015</span><br><span class="line">Processing:     3   17   5.1     16      56</span><br><span class="line">Waiting:        3   13   4.9     11      55</span><br><span class="line">Total:          6   33  63.5     31    1042</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%     31</span><br><span class="line">  66%     32</span><br><span class="line">  75%     33</span><br><span class="line">  80%     34</span><br><span class="line">  90%     35</span><br><span class="line">  95%     36</span><br><span class="line">  98%     40</span><br><span class="line">  99%     44</span><br><span class="line"> 100%   1042 (longest request)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ul>
+<li>测的结果平均每秒能处理30338个请求。</li>
+</ul>
+<h2 id="webbench">2 webBench</h2>
+<h3 id="简介-1">2.1 简介</h3>
+<p>GitHub地址：<a
+target="_blank" rel="noopener" href="https://github.com/EZLippi/WebBench">WebBench</a></p>
+<blockquote>
+<p>Webbench是Radim
+Kolar在1997年写的一个在linux下使用的非常简单的网站压测工具。它使用fork()模拟多个客户端同时访问我们设定的URL，测试网站在压力下工作的性能，最多可以模拟3万个并发连接去测试网站的负载能力。官网地址:http://home.tiscali.cz/~cz210552/webbench.html</p>
+</blockquote>
+<h3 id="安装-1">2.2 安装</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># prerequisite</span></span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install build-essential</span><br><span class="line"></span><br><span class="line"><span class="comment"># install webbench</span></span><br><span class="line">wget http://home.tiscali.cz/~cz210552/distfiles/webbench-1.5.tar.gz</span><br><span class="line">tar -zxvf webbench-1.5.tar.gz</span><br><span class="line"><span class="built_in">cd</span> webbench-1.5/</span><br><span class="line">sudo make</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
+<h3 id="测试-1">2.3 测试</h3>
+<p>运行1万个并发client，1秒钟。</p>
+<p>在我的实验室台式机上测试：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">jyshen@JYSHEN-WORKPC:~$ webbench -c 10000 -t 1 http://localhost:8080/</span><br><span class="line">Webbench - Simple Web Benchmark 1.5</span><br><span class="line">Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.</span><br><span class="line"></span><br><span class="line">Benchmarking: GET http://localhost:8080/</span><br><span class="line">10000 clients, running 1 sec.</span><br><span class="line"></span><br><span class="line">Speed=39851336 pages/min, 8545485 bytes/sec.</span><br><span class="line">Requests: 664189 susceed, 0 failed.</span><br></pre></td></tr></table></figure>
+<ul>
+<li>测得66万多个并发请求均成功处理</li>
+</ul>
+<p>实验室的服务器无法fork创建出相同数量的1万子进程，提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(base) sjy@h3c-UniServer-R5200-G3:~/HearyHTTPd/webbench-1.5$ webbench -c 10000 -t 1 http://localhost:8080/</span><br><span class="line">Webbench - Simple Web Benchmark 1.5</span><br><span class="line">Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.</span><br><span class="line"></span><br><span class="line">Benchmarking: GET http://localhost:8080/</span><br><span class="line">10000 clients, running 1 sec.</span><br><span class="line">problems forking worker no. 8841</span><br><span class="line">fork failed.: Resource temporarily unavailable</span><br></pre></td></tr></table></figure>
+<p>通过<code>htop</code>查了下，服务器上还有其他同学的不少计算程序在进行。暂时无法对比。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/" title="HTTP服务器压力测试">https://heary.cn/posts/HTTP服务器压力测试/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/HTTP/" rel="tag"><i class="fa fa-tag"></i> HTTP</a>
+              <a href="/tags/Benchmark/" rel="tag"><i class="fa fa-tag"></i> Benchmark</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/ThreadPoolExecutor-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%8E%9F%E7%90%86/" rel="prev" title="ThreadPoolExecutor - 从JDK11源码理解Java线程池原理">
+                  <i class="fa fa-chevron-left"></i> ThreadPoolExecutor - 从JDK11源码理解Java线程池原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/" rel="next" title="Selector - 从JDK11源码理解Java I/O复用原理">
+                  Selector - 从JDK11源码理解Java I/O复用原理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"7f903274160e2324df672a41a64ad847"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Redis作为一款高效的键值型内存数据库，值得学习。本文梳理学习过程中的笔记。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis笔记">
+<meta property="og:url" content="https://heary.cn/posts/Redis%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="Redis作为一款高效的键值型内存数据库，值得学习。本文梳理学习过程中的笔记。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-19T12:29:13.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.616Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/Redis%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/Redis%E7%AC%94%E8%AE%B0/","path":"posts/Redis笔记/","title":"Redis笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Redis笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#redis%E7%AC%94%E8%AE%B0"><span class="nav-text">Redis笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-text">1 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3"><span class="nav-text">1.1 了解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-text">1.2 安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C"><span class="nav-text">1.3 运行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">2 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2string"><span class="nav-text">2.1 字符串string</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%97%E8%A1%A8list"><span class="nav-text">2.2 列表list</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0ziplist%E4%B8%8Equicklist"><span class="nav-text">2.2.1
+底层实现——ziplist与quicklist</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%97%E5%85%B8hash"><span class="nav-text">2.3 字典hash</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B8%90%E8%BF%9B%E5%BC%8Frehash"><span class="nav-text">2.3.1 渐进式rehash</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E5%90%88set"><span class="nav-text">2.4 集合set</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88zset"><span class="nav-text">2.5 有序集合zset</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%B3%E8%B7%83%E5%88%97%E8%A1%A8skiplist"><span class="nav-text">2.5.1 跳跃列表skiplist</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">2.6 小结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E7%94%A8%E6%80%A7%E8%B4%A8"><span class="nav-text">2.6.1 通用性质</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4"><span class="nav-text">2.6.2 过期时间</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8"><span class="nav-text">3 应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="nav-text">3.1 分布式锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%B6%E6%97%B6%E9%98%9F%E5%88%97"><span class="nav-text">3.2 延时队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%8D%E5%9B%BE"><span class="nav-text">3.3 位图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hyperloglog"><span class="nav-text">3.4 HyperLogLog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8bloom-filter"><span class="nav-text">3.5 布隆过滤器（Bloom Filter）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E9%99%90%E6%B5%81"><span class="nav-text">3.6 简单限流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BC%8F%E6%96%97%E9%99%90%E6%B5%81"><span class="nav-text">3.7 漏斗限流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#geohash"><span class="nav-text">3.8 GeoHash</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#scan"><span class="nav-text">3.9 scan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%81%BF%E5%85%8Dbigkey"><span class="nav-text">3.10 避免bigkey</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-text">4 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#io%E6%A8%A1%E5%9E%8B"><span class="nav-text">4.1 I&#x2F;O模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE"><span class="nav-text">4.2 通信协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-text">4.3 持久化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7"><span class="nav-text">4.3.1 快照</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#aof%E6%97%A5%E5%BF%97"><span class="nav-text">4.3.2 AOF日志</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E9%81%93"><span class="nav-text">4.4 管道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1"><span class="nav-text">4.5 事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pubsub"><span class="nav-text">4.6 PubSub</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8A%82%E7%9C%81%E7%A9%BA%E9%97%B4"><span class="nav-text">4.7 节省空间</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bit-vs-64bit"><span class="nav-text">4.7.1 32bit vs 64bit</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Eziplist%E7%9A%84%E5%B0%8F%E5%AF%B9%E8%B1%A1%E5%8E%8B%E7%BC%A9%E5%AD%98%E5%82%A8"><span class="nav-text">4.7.2
+基于ziplist的小对象压缩存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Eintset%E7%9A%84%E7%B4%A7%E5%87%91%E6%95%B4%E6%95%B0%E6%95%B0%E7%BB%84"><span class="nav-text">4.7.3 基于intset的紧凑整数数组</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6"><span class="nav-text">4.7.4 内存回收机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AE%97%E6%B3%95"><span class="nav-text">4.7.5 内存分配算法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4"><span class="nav-text">5 集群</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#redis%E9%9B%86%E7%BE%A4%E4%B8%8Ecap%E5%AE%9A%E7%90%86"><span class="nav-text">5.1 Redis集群与CAP定理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cap%E5%AE%9A%E7%90%86"><span class="nav-text">5.1.1 CAP定理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E6%80%A7"><span class="nav-text">5.1.2 最终一致性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E5%90%8C%E6%AD%A5%E6%8A%80%E6%9C%AF"><span class="nav-text">5.2 集群同步技术</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BB%8E%E4%BB%8E%E5%90%8C%E6%AD%A5"><span class="nav-text">5.2.1 主从同步与从从同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A2%9E%E9%87%8F%E5%90%8C%E6%AD%A5"><span class="nav-text">5.2.2 增量同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7%E5%90%8C%E6%AD%A5"><span class="nav-text">5.2.3 快照同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A0%E7%9B%98%E5%A4%8D%E5%88%B6"><span class="nav-text">5.2.4 无盘复制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#wait%E6%8C%87%E4%BB%A4%E5%AE%9E%E7%8E%B0%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6"><span class="nav-text">5.2.5 wait指令实现同步复制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sentinel%E8%87%AA%E5%8A%A8%E4%B8%BB%E4%BB%8E%E5%88%87%E6%8D%A2%E6%8A%80%E6%9C%AF"><span class="nav-text">5.3 Sentinel：自动主从切换技术</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#codis%E4%B8%AD%E5%BF%83%E5%8C%96%E9%9B%86%E7%BE%A4%E6%96%B9%E6%A1%88"><span class="nav-text">5.4 Codis：中心化集群方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cluster%E5%8E%BB%E4%B8%AD%E5%BF%83%E5%8C%96%E9%9B%86%E7%BE%A4%E6%96%B9%E6%A1%88"><span class="nav-text">5.5 Cluster：去中心化集群方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-text">6 扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#streamredis5.0%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="nav-text">6.1 Stream：Redis5.0的消息队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#info%E7%8A%B6%E6%80%81%E8%AF%8A%E6%96%AD"><span class="nav-text">6.2 info：状态诊断</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redlock%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="nav-text">6.3 Redlock分布式锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5"><span class="nav-text">6.4 过期策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AE%97%E6%B3%95"><span class="nav-text">6.5 内存淘汰算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%87%92%E6%83%B0%E5%88%A0%E9%99%A4"><span class="nav-text">6.6 懒惰删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jedis"><span class="nav-text">6.7 Jedis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redis%E5%AE%89%E5%85%A8"><span class="nav-text">6.8 Redis安全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4%E5%AE%89%E5%85%A8"><span class="nav-text">6.8.1 指令安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AB%AF%E5%8F%A3%E5%AE%89%E5%85%A8"><span class="nav-text">6.8.2 端口安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%84%9A%E6%9C%AC%E5%AE%89%E5%85%A8"><span class="nav-text">6.8.3 脚本安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ssl%E4%BB%A3%E7%90%86"><span class="nav-text">6.8.4 SSL代理</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/Redis%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Redis笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-19 20:29:13" itemprop="dateCreated datePublished" datetime="2020-08-19T20:29:13+08:00">2020-08-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>11 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>Redis作为一款高效的键值型内存数据库，值得学习。本文梳理学习过程中的笔记。</p>
+<span id="more"></span>
+<h1 id="redis笔记">Redis笔记</h1>
+<blockquote>
+<p>钱文品. Redis深度历险：核心原理与应用实践[M]. 北京: 电子工业出版社,
+2019.</p>
+</blockquote>
+<h2 id="概述">1 概述</h2>
+<h3 id="了解">1.1 了解</h3>
+<p>Redis主要可以用作：</p>
+<ul>
+<li>缓存：记录点赞数、缓存热帖、用户行为、榜单……；</li>
+<li>分布式锁</li>
+</ul>
+<h3 id="安装">1.2 安装</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ubuntu</span></span><br><span class="line">sudo apt install redis</span><br><span class="line"></span><br><span class="line"><span class="comment"># centos</span></span><br><span class="line">sudo yum install redis</span><br></pre></td></tr></table></figure>
+<h3 id="运行">1.3 运行</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># redis command-line interface</span></span><br><span class="line">redis-cli</span><br></pre></td></tr></table></figure>
+<h2 id="数据结构">2 数据结构</h2>
+<p>Redis提供5种基础数据结构，分别为：字符串string、列表list、字典hash、集合set、有序集合zset。</p>
+<h3 id="字符串string">2.1 字符串string</h3>
+<p>Redis所有数据结构都以唯一的key字符串作为名称，以此获得相应的value数据。</p>
+<p>Redis
+string内部数据结构类似Java的ArrayList，预分配冗余空间以免频繁分配内存。当字符串小于1MB时，扩容方法为加倍当前容量；当超过1MB时，每次扩充1MB空间。字符串最大长度为512MB。</p>
+<h3 id="列表list">2.2 列表list</h3>
+<p>Redis
+list类似Java中的LinkedList链表（实际上不完全是），双向链表，插入和删除时间复杂度O(1)，查询时间复杂度O(N)。</p>
+<p>当list删除最后一个元素时，该数据结构被自动删除，内存回收。</p>
+<p>双向链表可以被用来实现队列、栈。</p>
+<h4 id="底层实现ziplist与quicklist">2.2.1
+底层实现——ziplist与quicklist</h4>
+<p>Redis list底层实现是quicklist数据结构。</p>
+<p>当list元素较少时，采用ziplist（压缩列表）。ziplist用连续内存将所有的元素连续存储。</p>
+<p>当list元素较多时，采用quicklist（快速链表）。quicklist是将链表与ziplist结合的产物，每一个ziplist包含多个元素，却仅需两个前后指针，因此，quicklist避免了为每个元素配备prev/next双指针的空间消耗。quicklist既满足了快速的插入和删除，又避免了产生较大的空间冗余。</p>
+<h3 id="字典hash">2.3 字典hash</h3>
+<p>Redis hash类似Java中的HashMap，无序字典，存储键值对。</p>
+<p>hash采用数组+链表的数据结构，但hash的值只能是字符串。</p>
+<p>当hash删除最后一个元素时，该数据结构被自动删除，内存回收。</p>
+<h4 id="渐进式rehash">2.3.1 渐进式rehash</h4>
+<p>Java的HashMap每次rehash需要一次性全部rehash，而Redis的hash在rehash时，为了避免阻塞服务，采用渐进式rehash。</p>
+<p>渐进式rehash在rehash时，保留新旧两个hash结构。旧的hashtable仍可用作查询，同时将旧的hashtable持续rehash到新的hashtable上。等rehash全部完成后，才以新的hashtable取代旧的hashtable。</p>
+<h3 id="集合set">2.4 集合set</h3>
+<p>Redis set相当于Java中的HashSet，内部的键值对时无序的、唯一的。</p>
+<p>set的底层实现相当于是hash，只不过hash的value村的都是NULL。</p>
+<p>当set删除最后一个元素时，该数据结构被自动删除，内存回收。</p>
+<h3 id="有序集合zset">2.5 有序集合zset</h3>
+<p>Redis zset类似Java的SortedSet和HashMap的结合体。</p>
+<p>zset一方面是set，value元素是唯一的，另一方面其有序性是依靠为value赋予score作为排序权重实现的。</p>
+<p>当zset删除最后一个元素时，该数据结构被自动删除，内存回收。</p>
+<h4 id="跳跃列表skiplist">2.5.1 跳跃列表skiplist</h4>
+<p>zset内部的排序功能采用skiplist实现。</p>
+<p>skiplist中，高层（level）链表跨度大，连接比较大的跨度范围。越往底层跨度越小，表示比较小的跨度范围。通过skiplist，可以从大范围缩小到小范围，快速定位插入与查询的位置。</p>
+<h3 id="小结">2.6 小结</h3>
+<h4 id="通用性质">2.6.1 通用性质</h4>
+<p>list, set, hash, zset这四种容器数据结构具有两个通用性质：</p>
+<ol type="1">
+<li>create if not exists：操作时，如容器不存在，则新建；</li>
+<li>drop if not elements：操作时，如容器为空，则删除。</li>
+</ol>
+<h4 id="过期时间">2.6.2 过期时间</h4>
+<p>所有数据结构都可设置过期时间，过期则删除。</p>
+<p>字符串设置过期时间后，如果字符串被修改，则过期时间失效。</p>
+<h2 id="应用">3 应用</h2>
+<h3 id="分布式锁">3.1 分布式锁</h3>
+<p>setnx (set if not exists)指令做锁标记，del删除锁标记。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; setnx lock:resource_a <span class="literal">true</span></span><br><span class="line">&gt; expire lock:resource_a 5</span><br><span class="line">&gt; del lock:resource_a</span><br></pre></td></tr></table></figure>
+<ul>
+<li>事务需要判单自己能够设置对争用资源的分布式锁，才能修改资源。</li>
+<li>expire设置5秒过期时间，防止死锁。</li>
+</ul>
+<h3 id="延时队列">3.2 延时队列</h3>
+<p>list可以作为异步消息队列。</p>
+<p>rpush/lpush操作入队列，lpop/rpop操作出队列。</p>
+<p>blpop/brpop可以阻塞式（blocking）地读取数据。</p>
+<h3 id="位图">3.3 位图</h3>
+<p>get/set处理整个位图的内容。</p>
+<p>getbit/setbit处理各个位。</p>
+<p>bitcount统计范围内1的位数。</p>
+<p>bitpos查询第一个0或1的位置。</p>
+<p>bitfield，包含get/set/incrby子指令，可以读取、设置和自增指定范围的位。bitfield可以混合多个子指令执行。</p>
+<h3 id="hyperloglog">3.4 HyperLogLog</h3>
+<p>统计PV量无需去重，incrby自增就可以。统计UV则需要去重，不是简单的自增，去重常用的set集合在数据量很大时会消耗巨大的内存空间。</p>
+<p>HyperLogLog可以实现去重计数问题。</p>
+<p>pfadd添加元素（增加对该元素的计数）；</p>
+<p>pfcount统计元素的计数。</p>
+<p>pfmerge用于合并多个pf计数元素为同一个元素，合并pf计数值。</p>
+<p>pf指的是HyperLogLog的发明人Philippe Flajolet教授。</p>
+<p>HyperLogLog数据结构在计数较小时采用
+稀疏矩阵存储，在计数超过阈值时，转变为稠密矩阵。</p>
+<p>HyperLogLog占据12KB存储空间，在数据量很大时，比set小了太多。</p>
+<p>HyperLogLog的原理是调整低位连续零位的最大长度K，若K越大，概率越低，则说明计数N越大，由此通过有限的连续零位K来估算计数N，K与N存在线性相关性。占用12KB则是因为Redis的HyperLogLog实现采用<span
+class="math inline">\(2^{14}=16384\)</span>个桶，每个桶maxbit为6
+bit，因此<span class="math inline">\(2^{14} \times 6bit \div 8bit/byte =
+12KB\)</span>。</p>
+<h3 id="布隆过滤器bloom-filter">3.5 布隆过滤器（Bloom Filter）</h3>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/RedisBloom/RedisBloom">RedisBloom</a></p>
+<p><strong>RedisBloom: Probabilistic Data Structures for
+Redis</strong></p>
+<p>The RedisBloom module provides four data structures: a scalable
+<strong>Bloom filter</strong>, a <strong>cuckoo filter</strong>, a
+<strong>count-min sketch</strong>, and a <strong>top-k</strong>. These
+data structures trade perfect accuracy for extreme memory efficiency, so
+they're especially useful for big data and streaming applications.</p>
+</blockquote>
+<p>bf.add添加元素；</p>
+<p>bf.exists检查元素是否存在。</p>
+<p>bf.madd添加多个元素；</p>
+<p>bf.mexists检查多个元素是否存在。（返回分别表示每个元素存在性的0/1）</p>
+<p>bf.reverse在添加元素之前预设布隆过滤器的key,
+error_rate和initial_size。</p>
+<p>布隆过滤器：</p>
+<ul>
+<li>添加时计算元素k个哈希，将对应的k个bit置为1；</li>
+<li>检查存在时计算元素k个哈希，检查对应的k个bits是否都为1，如果是，则元素存在，否则不存在。</li>
+</ul>
+<p>对hash函数数量k，布隆过滤器bit数量m，预计元素数量n，错误率f，有公式：
+<span class="math display">\[
+k = \ln2 \times (m/n) =  0.7 \times (m / n) \\
+f = 2^{-k} =  0.6185^{m/n}
+\]</span></p>
+<ul>
+<li>此时错误率最低。</li>
+</ul>
+<h3 id="简单限流">3.6 简单限流</h3>
+<p>以zset的score范围来划定滑动窗口。score存储timestamp，这样就可以计算得出时间窗口内的元素数量，判断访问计数是否超限。</p>
+<p>zset不适合数量很大的限流，例如：60秒内限流100万次，100万个元素的zset会占用过大的空间。</p>
+<h3 id="漏斗限流">3.7 漏斗限流</h3>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/brandur/redis-cell">redis-cell</a></p>
+<p>A Redis module that provides rate limiting in Redis as a single
+command. Implements the fairly sophisticated <a
+target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Generic_cell_rate_algorithm">generic
+cell rate algorithm</a> (GCRA) which provides a rolling time window and
+doesn't depend on a background drip process.</p>
+</blockquote>
+<p>漏斗（funnel）容量有限，不满时可以装入液体，漏斗满时无法装入液体，需要等漏斗内的液体慢慢流走一部分，才能继续装入。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">CL.THROTTLE user123 15 30 60 1</span><br><span class="line">               ▲     ▲  ▲  ▲ ▲</span><br><span class="line">               |     |  |  | └───── apply 1 token (default if omitted)</span><br><span class="line">               |     |  └──┴─────── 30 tokens / 60 seconds</span><br><span class="line">               |     └───────────── 15 max_burst</span><br><span class="line">               └─────────────────── key &quot;user123&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="geohash">3.8 GeoHash</h3>
+<p>通过GeoHash功能，可以快速找出指定经纬度周围的元素。</p>
+<p>GeoHash将二维平面处理成网格，然后不断地行、列二分，对二维坐标进行编码，映射为一维整数。</p>
+<p>Redis中，GeoHash将经纬度编码为52位整数，存入zset中，score是经纬度编码整数（zset的浮点数score可以无损存储52位整数），value是元素值。在zset中，借助skiplist来找出元素附近范围的其他元素是很容易的事情。使用坐标时，将编码整数解码还原为坐标即可。</p>
+<p>geoadd添加经纬度坐标；</p>
+<p>geodist计算元素之间的距离；</p>
+<p>geopos读取元素的坐标；</p>
+<p>geohash读取元素的经纬度编码字符串（base32编码的坐标值）。</p>
+<p>georadiusbymember查询指定元素附近的其他元素。</p>
+<p>注意：集群中，单个key下存储的坐标数量不宜过多（超过1MB），避免集群迁移出现卡顿。或者干脆采用独立实例，不做集群。</p>
+<h3 id="scan">3.9 scan</h3>
+<p>keys列出符合pattern的key，采用遍历算法，时间复杂度O(N)。</p>
+<p>scan从指定cursor开始，匹配pattern，扫描count个槽位。相较于keys，scan可以避免每次遍历整个redis内存槽。</p>
+<p>Redis本身就相当于是一个很大的HashMap。scan的遍历顺序采用高位进位加法，以此避免字典扩容和缩容时重复或遗漏遍历槽位。</p>
+<p>zscan遍历zset元素；</p>
+<p>sscan遍历set元素；</p>
+<p>hscan遍历hash元素。</p>
+<h3 id="避免bigkey">3.10 避免bigkey</h3>
+<p>在业务开发中，避免大key的产生。</p>
+<p>大key数据不论是在集群迁移时，还是在容器需要扩容时，哪怕是在回收时（因较大内存空间的分配和回收），都容易造成卡顿。</p>
+<p>可以采用<code>--bigkeys</code>选项来检索大key。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli --bigkeys</span><br></pre></td></tr></table></figure>
+<h2 id="原理">4 原理</h2>
+<h3 id="io模型">4.1 I/O模型</h3>
+<p>Redis是单线程程序。</p>
+<p>Redis通过非阻塞I/O多路复用技术来提高单线程I/O处理效率。</p>
+<p>对于每一个客户端socket连接，Redis为其关联：</p>
+<ol type="1">
+<li>一个指令队列，用于从客户端socket连接中读取指令。指令队列中的指令遵循FCFS；</li>
+<li>一个响应队列，用于向客户端socket连接中写入指令。如果响应队列为空，说明暂无响应数据，则将该响应队列移出多路复用的write_fds以节省select代价。</li>
+</ol>
+<p>对于定时任务，Redis采用最小堆进行管理：</p>
+<ul>
+<li>最临近的任务放在堆顶；</li>
+<li>取堆顶任务的距离时间作为select操作的timeout，这样在这段时间内就可以放心地select，不必担心错过定时任务。</li>
+</ul>
+<h3 id="通信协议">4.2 通信协议</h3>
+<p>RESP (Redis Serialization
+Protocol)是Redis采用地通信协议，这是一种文本协议，实现简单，解析性能好。</p>
+<p>RESP把数据分为5种最小单元类型，制定规则：</p>
+<ol type="1">
+<li>单行字符串，以<code>+</code>开头；</li>
+<li>多行字符串，以<code>$&lt;len&gt;</code>开头；</li>
+<li>整数，以<code>:</code>开头；</li>
+<li>错误消息，以<code>-</code>开头；</li>
+<li>数组，以<code>*&lt;len&gt;</code>开头。</li>
+</ol>
+<h3 id="持久化">4.3 持久化</h3>
+<h4 id="快照">4.3.1 快照</h4>
+<p>Redis采用fork机制创建子进程来导出快照。</p>
+<p>内存空间采用COW机制，因此，父进程照常处理事务，修改的数据会记录在新的空间中，而子进程看到的仍然是fork时的内存数据，不用担心导出时数据又被更新的情况。</p>
+<h4 id="aof日志">4.3.2 AOF日志</h4>
+<p>AOF日志记录Redis实例创建以来所有的修改性指令序列。</p>
+<p>Redis收到客户端修改指令后，进行检查和处理，如果指令执行成功，则立即将该指令文本存储到AOF日志中。</p>
+<p><strong>AOF重写</strong>：长时间修改会积累大量的AOF日志，Redis可以开辟一个子进程遍历生成新的AOF指令日志，替代旧的AOF日志，起到日志瘦身的效果。（对同一个key频繁修改，会产生大量AOF日志，但实际上存一项就可以了。）</p>
+<p><strong>fsync</strong>：Redis定期调用fsync确保AOF日志实实在在写入磁盘，避免突然断电造成内存缓冲数据丢失。</p>
+<p><strong>混合持久化</strong>：快照 +
+AOF日志（增量）。提高重启效率，避免重做全部的AOF日志操作。</p>
+<h3 id="管道">4.4 管道</h3>
+<p>Redis客户端重排指令。将读指令连续归在一起，写指令连续归在一起。这样客户端只需要向操作系统网络写缓冲区写一次，读缓冲区读一次即可，服务器端同理。节省了网络读写的次数。</p>
+<h3 id="事务">4.5 事务</h3>
+<p>Redis可以实现begin, commit和rollback的事务功能。</p>
+<h3 id="pubsub">4.6 PubSub</h3>
+<p>PubSub, Publisher Subscriber.</p>
+<p>消息多播，一个Publisher可以向多个Subscriber提供消息。</p>
+<p>Subscriber需要先订阅若干个channel，随后，Publisher向channel中发布数据，Redis会将数据提供给订阅该channel的所有Subscriber。</p>
+<p>但是，如果subscriber掉线了，过后再上线，就不会再收到掉线时错过的消息了。Redis宕机时，就相当于时没有任何subscriber的情况，会造成所有的消息都被直接丢失的情况。</p>
+<p>Redis在5.0版本开始提供新的Stream数据结构，实现了持久化的消息队列。</p>
+<h3 id="节省空间">4.7 节省空间</h3>
+<h4 id="bit-vs-64bit">4.7.1 32bit vs 64bit</h4>
+<p>32bit编译的Redis比64bit编译的版本节省一半的指针内存消耗。如使用内存不超过4GB，采用32bit即可。</p>
+<h4 id="基于ziplist的小对象压缩存储">4.7.2
+基于ziplist的小对象压缩存储</h4>
+<p>相较于传统的链表，每个entry作为一个节点，都需要配备prev/next两个指针，ziplist则将多个entry以数组的形式存为一个节点，减少所需的指针空间。</p>
+<p>每个ziplits节点存储：</p>
+<ol type="1">
+<li>zlbytes，4字节，ziplist占用的字节数；</li>
+<li>zltail，4字节，最后一个entry的偏移地址；</li>
+<li>zllen，2字节，ziplist的entry数量；</li>
+<li>entry数组，存储若干entry；</li>
+<li>zlend，1字节，幻数255标记结尾。</li>
+</ol>
+<h4 id="基于intset的紧凑整数数组">4.7.3 基于intset的紧凑整数数组</h4>
+<p>inset数据结构包含：</p>
+<ol type="1">
+<li>encoding，表示value的位宽；</li>
+<li>length，表示元素的个数；</li>
+<li>value数组，存储若干value。</li>
+</ol>
+<p>若整数用uint16表示即可，intset就用uint16；需要升级到uint32或uint64时再动态升级。</p>
+<h4 id="内存回收机制">4.7.4 内存回收机制</h4>
+<p>删除key时，内存不会立即全部回收释放交给操作系统，而是会预留部分内存给未来的使用需求。</p>
+<h4 id="内存分配算法">4.7.5 内存分配算法</h4>
+<p>Redis有多种内存分配算法：</p>
+<ol type="1">
+<li>jemalloc，facebook；</li>
+<li>tcmalloc，google。</li>
+</ol>
+<p>Redis默认使用jemalloc，该库性能稍好。</p>
+<p>通过<code>info memory</code>可以查到当前使用的内存分配库。</p>
+<h2 id="集群">5 集群</h2>
+<p>多个Redis节点组成Redis集群。</p>
+<h3 id="redis集群与cap定理">5.1 Redis集群与CAP定理</h3>
+<h4 id="cap定理">5.1.1 CAP定理</h4>
+<p>CAP定理指的是分布式系统的一致性（Consistency）、可用性（Availability）和分区容忍性（Partition
+tolerance）不能三者兼得，最多只能满足两项。</p>
+<p>当网络异常时，分布式节点之间无法连接，形成网络分区现象，如果要容忍分区情况，此时有两种选择：</p>
+<ol type="1">
+<li><strong>保证可用性</strong>：即允许对每个节点的读和写，这样一来，节点之间就会因为无法立即同步而出现数据不一致的问题，<strong>放弃了强一致性</strong>，即AP；</li>
+<li><strong>放弃可用性</strong>：只允许对每个节点的读，禁止写，这样一来，能保证节点之间的数据<strong>一致性</strong>，但用户无法更新数据，<strong>损失了可用性</strong>，即CP[；</li>
+</ol>
+<p>也就是说，网络分区发生时，一致性和可用性无法两全。</p>
+<h4 id="最终一致性">5.1.2 最终一致性</h4>
+<p>Redis的主从节点之间异步同步，不能保证严格的强一致性，因此Redis的选择是放弃一致性，转而满足可用性和分区容忍性。</p>
+<p>Redis提供的是<strong>最终一致性</strong>（Eventually
+consistent），网络断开时，主从节点之间会出现不一致，但网络恢复后，会多策略地尽快同步，最终主从节点保持一致。</p>
+<h3 id="集群同步技术">5.2 集群同步技术</h3>
+<h4 id="主从同步与从从同步">5.2.1 主从同步与从从同步</h4>
+<p>主从同步（master-slave
+sync）：主节点与从节点之间同步，主节点把数据复制（replicate）到从节点。</p>
+<p>从从同步（slave-slave sync）：从节点把数据复制到另一个从节点。</p>
+<p>通过引入从从同步，可以降低主节点的同步负担。</p>
+<h4 id="增量同步">5.2.2 增量同步</h4>
+<p>Redis同步指令流。</p>
+<p>Redis主节点把写指令记录在本地的指令缓存（buffer）中，异步地将缓存中地指令同步到从节点，即增量同步。</p>
+<p>指令缓存采用的是定长环形数组，因此，如果数组写满了，就会重新从头写入，也就覆盖掉了原有内容。如果网络分区发生时，有节点上产生大量写指令，为了避免指令缓存被覆盖导致写入记录丢失，不能只依赖指令缓存来保存未同步的指令。</p>
+<h4 id="快照同步">5.2.3 快照同步</h4>
+<p>快照同步：执行bgsave操作，把内存中的数据全部快照存储到硬盘文件中。</p>
+<p>增加从节点：增加新的从节点时，通过快照同步为从节点全量加载数据，随后再做增量同步。</p>
+<p>快照同步死循环问题：当快照同步太慢，或者指令缓存太小时，就会出现快照同步还没结束，指令缓存就写满的情况。这样一来，指令就不得不直接写入，那快照就过期了，又得重新做一遍快照，而重新做快照可能又太慢，指令缓存又写满了……。为避免死循环，需要设置一个合适的指令缓存大小。</p>
+<h4 id="无盘复制">5.2.4 无盘复制</h4>
+<p>快照同步需要写入磁盘，有不小的文件IO代价。而且Redis执行AOF时需要做fsync，如果此时快照同步，就不得不延后fsync，这样AOF就延后了，指令执行就延后了。</p>
+<p>为此，Redis
+2.8.18开始支持无盘复制，主节点可以通过socket通信直接把快照发给从节点，避免磁盘上的文件IO代价。</p>
+<h4 id="wait指令实现同步复制">5.2.5 wait指令实现同步复制</h4>
+<p>Redis的复制本身时异步执行的，因此不具备强一致性。</p>
+<p>通过wait指令，可以实现Redis的同步复制，保证系统的（在没有网络分区情况下的）强一致性。</p>
+<p>wait可以有限等待，也可以无限等待N个从节点同步完成，再执行后续指令。</p>
+<p>如果无限等待时，Redis出现网络分区，那么同步无法完成，就会一直阻塞，导致Redis失去可用性。</p>
+<h3 id="sentinel自动主从切换技术">5.3 Sentinel：自动主从切换技术</h3>
+<p>Redis
+Sentinel集群通常包含3~5个Sentinel节点，保证Sentinel的可用性。</p>
+<p>Sentinel集群持续监控主节点和从节点的状态，一旦出现问题，就自动提升一个可用的从节点为主节点，取代故障的不可用的主节点。</p>
+<p>Sentinel的具体工作流程：</p>
+<ol type="1">
+<li>Client首先向Sentinel请求主节点的地址；</li>
+<li>Sentinel将最新的主节点地址返回给Client；</li>
+<li>Client访问主节点。</li>
+</ol>
+<h3 id="codis中心化集群方案">5.4 Codis：中心化集群方案</h3>
+<p>Codis是Redis集群方案之一，在Codis基础之上，开发出了TiDB。</p>
+<p>单个Redis节点如果存储太多数据，会使得快照文件rdb特别大，导致同步起来很耗时，而且全量恢复也变得很慢。</p>
+<p>Codis通过把数据分散到众多Redis节点上，来避免每个节点的数据量过大。</p>
+<p>Codis对key做哈希，映射到1024个槽位（slots），以此求模，取得数据应该映射到的节点序号。分配完成后，Codis节点会存储槽位与Redis节点的映射关系。</p>
+<p>Codis的扩容：可以通过增加Redis节点来扩容集群的容量。</p>
+<p>Codis通过mget指令可以从分散的节点上取数据并汇总给用户。</p>
+<h3 id="cluster去中心化集群方案">5.5 Cluster：去中心化集群方案</h3>
+<p>Redis Cluster是去中心化的集群方案，每个节点都是对等的。</p>
+<p>Redis Cluster把数据分为16384个槽位（<span
+class="math inline">\(2^{14}\)</span>），每个节点负责一部分的槽位。客户端根据key来确定槽位，进而确定目标节点。如果客户端向错误的节点发送请求，该节点会计算key对应的槽位，向客户端发送重定向的响应，告知客户端目标节点。</p>
+<p><strong>节点迁移</strong>：迁移的最小单位是槽位，流程是从源节点获取内容，然后存到目标节点，最后从源节点中删除内容。</p>
+<p><strong>容错</strong>：Redis
+Cluster可以为每个主节点设置若干从节点，自动实现故障时从节点提升为主节点。</p>
+<p><strong>可能下线与确定下线</strong>：集群节点采用Gossip协议来广播自己的状态。一个节点发现某个节点失联，则进入可能下线（PFail,
+Possibly
+Fail）状态。集群中大多数节点都收到该节点失联的消息，则标记该节点为确定下线（Fail）状态。</p>
+<h2 id="扩展">6 扩展</h2>
+<h3 id="streamredis5.0的消息队列">6.1 Stream：Redis5.0的消息队列</h3>
+<p>Redis Stream是Redis
+5.0中退出的一款新的支持多播的可持久化消息队列，极大地借鉴了Kafka的设计。</p>
+<p>Redis
+Stream通过消息链表将所有加入的消息串起来，每个消息包含唯一ID（timestampInMillis-sequence）和消息内容（形如hash结构的键值对）。</p>
+<p>消费组：每个Stream可以挂载多个消费组（Consumer
+Group），不同消费组互相独立，互不影响，每个消费组都有一个游标last_delivered_id在Stream数组上向前移动，表示当前已经消费到哪条消息了。</p>
+<p>消费者：每个消费组中可以包含多个消费者（Consumer），消费者之间为竞争关系，任意一个消费者读取消息都会使消费组的游标last_delivered_id向前移动。</p>
+<p>PEL：每个消费者有一个的PEL（Pending Entries
+List），PEL是一个状态列表pending_ids，记录已经被客户端读取，但尚未收到ACK的消息ID。通过PEL可以确保客户端至少消费了消息1次，而不会在网络传输中途丢失了消息。
+客户端重连时，可以根据PEL重新获取一遍接收失败的消息。</p>
+<p>分区：Redis没有原生支持分区，分区Stream可以通过在客户端设计哈希策略来实现。Kafka原生支持Partition也是通过客户端的HashStrategy来决定将不同的消息加入不同的分区的。</p>
+<p>xgroup create：创建消费组，创建时需要指定从哪个消息ID开始消费。</p>
+<p>xadd：加入消息；</p>
+<p>xdel：删除消息，只设置标志位，不实际删除消息；</p>
+<p>xrange：获取消息列表，自动过滤标记为删除的消息；</p>
+<p>xlen：获取消息长度；</p>
+<p>del：删除整个消息列表的所有消息。</p>
+<h3 id="info状态诊断">6.2 info：状态诊断</h3>
+<p>info指令可查询：</p>
+<ol type="1">
+<li>server：服务器信息；</li>
+<li>clients：客户端信息；</li>
+<li>memory：运行内存统计数据；</li>
+<li>persistence：持久化信息；</li>
+<li>stats：通用统计数据；</li>
+<li>replication：主从复制；</li>
+<li>cpu：cpu使用情况；</li>
+<li>cluster：集群信息；</li>
+<li>keyspace：键值对统计信息。</li>
+</ol>
+<p>查询方式如：</p>
+<p>Redis内：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt; info memory</span><br></pre></td></tr></table></figure>
+<p>Redis外：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli info memory</span><br></pre></td></tr></table></figure>
+<h3 id="redlock分布式锁">6.3 Redlock分布式锁</h3>
+<p>Sentinel集群中，主节点挂掉后，从节点取而代之，但主节点的分布式锁没有同步到从节点，新升任主节点的从节点中没有这个分布式锁，就会造成不安全性。</p>
+<p>对多个对等的Redis实例，Redlock基于“大多数机制”，加锁时，向过半的节点发送set指令，过半的节点加锁成功，则本次加锁成功；解锁时，向所有节点发送del指令。因为Redlock需要向多个节点进行读写，考虑出错重试、时钟漂移等问题，相对单实例Redis的性能会下降一点。</p>
+<h3 id="过期策略">6.4 过期策略</h3>
+<p>设置了expire时间的key放在一个独立的字典里。</p>
+<p>Redis的过期策略既有定期扫描，也有惰性策略。</p>
+<p>定期扫描，Redis默认每秒10次过期扫描，扫描算法为：</p>
+<ol type="1">
+<li>从过期字典中随机选出20个key；</li>
+<li>删除这20个key中已经过期的key；</li>
+<li>如果过期key的比例超过1/4，则重复步骤1.。</li>
+</ol>
+<p>为避免循环过度造成线程卡死，默认设置扫描时间上限为25ms。这个25ms的依据是，1秒10次，每次25ms，总共最多占用250ms，即1/4的CPU时间。Redis实际上限制的是CPU时间，避免过期扫描耗费超过1/4的CPU时间。</p>
+<p>如果大量key同时过期，Redis就会循环扫描字典，删除key，直到过期字典中的过期key比例变低。当过期的key数量很多的时候，扫描时间是完全可能撞到25ms的上限的。再加上内存回收的代价，就会产生比较多的CPU消耗。如果此时新来的请求设置的超时时间很短，例如10ms，就会导致刚设置数据，就开始扫描，等25ms扫描完，才来得及处理客户端的读取操作时，key早就过期了。客户端就发现自己刚设置的值，立即去修改就会超时过期，实际上是因为Redis的过期策略在间隔中消耗了时间。</p>
+<p>为了避免以上问题，一方面，考虑到过期策略扫描耗时，过期时间不宜设置的过短；另一方面，避免大量key同时过期，哪怕对统一的过期时间加上一个随机量也好。</p>
+<p>惰性策略：访问key时对key的过期时间进行检查，如果过期了就删除。</p>
+<p>从节点不会主动执行过期策略，主节点删除节点并同步del给从节点，从节点收到后写入AOF，跟着主节点照做就是。不过因为同步是异步的，所以主从节点之间强一致性无法保证。</p>
+<h3 id="内存淘汰算法">6.5 内存淘汰算法</h3>
+<p>Redis不允许发生swap，因为会造成性能急剧下降。</p>
+<p>当Redis实际内存超过maxmemory时，有几种maxmemory-policy：</p>
+<ol type="1">
+<li>noeviction：可读不可写；</li>
+<li>volatile-lru：淘汰过期集合中最少使用的（LRU）；</li>
+<li>volatile-ttl：淘汰过期集合中剩余寿命TTL最小的key；</li>
+<li>volatile-random：淘汰过期集合中随机key；</li>
+<li>allkeys-lru：全体key中淘汰LRU；</li>
+<li>allkeys-random：全体key中淘汰随机的key。</li>
+</ol>
+<h3 id="懒惰删除">6.6 懒惰删除</h3>
+<p>del直接删除，通常非常快，但对象非常大时，删除操作会造成单线程卡顿。</p>
+<p>Redis
+4.0引入的unlink可以解决卡顿问题，unlink卸下待删除对象，然后交给后台线程去异步地回收内存。</p>
+<p>Redis
+4.0为flushdb和flushall都引入了异步化，加上async选项即可，如：<code>flushall async</code>。</p>
+<p>异步删除借助异步队列实现，MainThread通过submitTask将待删除对象放入ConcurrentQueue，懒惰删除线程LazyFreeThread从中fetchTask并执行异步删除。</p>
+<p>Redis的AOF
+Sync需要将AOF日志同步到磁盘，需要调用sync函数，因为sync比较耗时，因此采用异步线程去调用，该异步线程也有自己的任务队列，存放AOF
+Sync任务。</p>
+<p>Redis在del和flush以外，也会在key过期、LRU淘汰、rename指令执行时回收内存。节点接受全量同步rdb文件后也会清空内存以载入数据。这些删除场景涉及额外的选项：</p>
+<ol type="1">
+<li>slave-lazy-flush：从节点接受rdb文件后的flush操作；</li>
+<li>lazyfree-lazy-eviction：内存达到maxmemory时进行淘汰；</li>
+<li>lazyfree-lazy-expire-key：过期删除；</li>
+<li>lazyfree-lazy-server-del rename：指令删除destKey。</li>
+</ol>
+<h3 id="jedis">6.7 Jedis</h3>
+<p>Jedis是Java的Redis开源客户端。</p>
+<p>因为Jedis对象不是线程安全的，所以使用Jedis是从Jedis连接池JedisPool中取出一个Jedis对象归该线程独占，用完了再还给连接池。</p>
+<p>Jedis默认没有重试机制，网络抖动造成连接断开，再发送指令就会报错。需要手动捕获JedisConnectionException进行重连处理。</p>
+<h3 id="redis安全">6.8 Redis安全</h3>
+<h4 id="指令安全">6.8.1 指令安全</h4>
+<p>rename-command既可以将已有命令更名，也可以更名为空字符串，从而屏蔽该命令被调用。</p>
+<h4 id="端口安全">6.8.2 端口安全</h4>
+<p>bind指令规定监听的IP地址。</p>
+<p>requirepass设置密码访问限制，从节点masterauth设置于主节点同步连接密码。</p>
+<h4 id="脚本安全">6.8.3 脚本安全</h4>
+<p>避免UGC的Lua脚本。</p>
+<p>避免以root权限启动Redis。</p>
+<h4 id="ssl代理">6.8.4 SSL代理</h4>
+<p>使用SSH保护Redis连接。</p>
+<p>使用官方推荐的spiped工具对SSH通道进行二次加密。spiped是一款加密代理软件。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/Redis%E7%AC%94%E8%AE%B0/" title="Redis笔记">https://heary.cn/posts/Redis笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"><i class="fa fa-tag"></i> Redis</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/" rel="prev" title="初识分布式系统：CAP定理与BASE理论">
+                  <i class="fa fa-chevron-left"></i> 初识分布式系统：CAP定理与BASE理论
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/Linux%E7%8E%AF%E5%A2%83%E4%B8%8B%E9%87%8D%E8%A3%85NVIDIA%E9%A9%B1%E5%8A%A8%E6%8A%A5%E9%94%99kernel-module-nvidia-modeset-in-use%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/" rel="next" title="Linux环境下重装NVIDIA驱动报错kernel module (nvidia_modeset) in use问题分析">
+                  Linux环境下重装NVIDIA驱动报错kernel module (nvidia_modeset) in use问题分析 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"0d45864711ddcf5780d161b1089e2903"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="阅读JDK11源码实现的过程中，发现同为java.nio.channels.Selector，是Windows和Linux平台的Selector.open()所构造的Selector的底层实现完全不一样。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Selector - 从JDK11源码理解Java I&#x2F;O复用原理">
+<meta property="og:url" content="https://heary.cn/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="阅读JDK11源码实现的过程中，发现同为java.nio.channels.Selector，是Windows和Linux平台的Selector.open()所构造的Selector的底层实现完全不一样。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-09T09:07:47.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.619Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="NIO">
+<meta property="article:tag" content="JDK">
+<meta property="article:tag" content="I&#x2F;O Multiplexing">
+<meta property="article:tag" content="Poll">
+<meta property="article:tag" content="EPoll">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/","path":"posts/Selector-从JDK11源码理解Java-I-O复用原理/","title":"Selector - 从JDK11源码理解Java I/O复用原理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Selector - 从JDK11源码理解Java I/O复用原理 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#selector---%E4%BB%8Ejdk11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3java-io%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86"><span class="nav-text">Selector -
+从JDK11源码理解Java I&#x2F;O复用原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%B1%82"><span class="nav-text">应用层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%BD%E8%B1%A1%E5%B1%82"><span class="nav-text">抽象层</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#selector"><span class="nav-text">Selector</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#selector.open"><span class="nav-text">Selector.open()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#selector.select"><span class="nav-text">Selector.select()</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#selectorimpl"><span class="nav-text">SelectorImpl</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selectorprovider"><span class="nav-text">SelectorProvider</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#selectorprovider.provider"><span class="nav-text">SelectorProvider.provider()</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E4%BC%98%E5%85%88%E7%BA%A7-loadproviderfromproperty"><span class="nav-text">第一优先级
+loadProviderFromProperty</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E4%BC%98%E5%85%88%E7%BA%A7-loadproviderasservice"><span class="nav-text">第二优先级
+loadProviderAsService</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E4%BC%98%E5%85%88%E7%BA%A7-sun.nio.ch.defaultselectorprovider"><span class="nav-text">最终优先级
+sun.nio.ch.DefaultSelectorProvider</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#defaultselectorprovider"><span class="nav-text">DefaultSelectorProvider</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#defaultselector.create"><span class="nav-text">DefaultSelector.create()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#windowsselectorprovider%E4%B8%8Eepollselectorprovider"><span class="nav-text">WindowsSelectorProvider与EPollSelectorProvider</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#windowsselectorprovider.openselector"><span class="nav-text">WindowsSelectorProvider.openSelector()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#epollselectorprovider.openselector"><span class="nav-text">EPollSelectorProvider.openSelector()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB%E5%B0%8F%E7%BB%93"><span class="nav-text">继承关系小结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#selector%E7%B3%BB%E5%88%97"><span class="nav-text">Selector系列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#selectorprovider%E7%B3%BB%E5%88%97"><span class="nav-text">SelectorProvider系列</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%B1%82"><span class="nav-text">实现层</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#windows-jdk11%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-text">Windows JDK11的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#windowsselectorprovider"><span class="nav-text">WindowsSelectorProvider</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#windowsselectorimpl"><span class="nav-text">WindowsSelectorImpl</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">主要数据结构</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#windowsselectorimpl.doselect"><span class="nav-text">WindowsSelectorImpl.doSelect()</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#windowsselectorimpl.selectthread"><span class="nav-text">WindowsSelectorImpl.SelectThread</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#windowsselectorimpl.selectthread.run"><span class="nav-text">WindowsSelectorImpl.SelectThread.run()</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#windowsselectorimpl.subselector"><span class="nav-text">WindowsSelectorImpl.SubSelector</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#windowsselectorimpl.subselector.poll"><span class="nav-text">WindowsSelectorImpl.SubSelector.poll()</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#windowsselectorimpl.subselector.poll0"><span class="nav-text">WindowsSelectorImpl.SubSelector.poll0()</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#linux-jdk11%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-text">Linux JDK11的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#epollselectorprovider"><span class="nav-text">EPollSelectorProvider</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#epollselectorimpl"><span class="nav-text">EPollSelectorImpl</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#epollselectorimpl.doselector"><span class="nav-text">EPollSelectorImpl.doSelector</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#epoll"><span class="nav-text">EPoll</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#epoll.wait"><span class="nav-text">EPoll.wait</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Selector - 从JDK11源码理解Java I/O复用原理 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Selector - 从JDK11源码理解Java I/O复用原理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-09 17:07:47" itemprop="dateCreated datePublished" datetime="2020-08-09T17:07:47+08:00">2020-08-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>23k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>21 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>阅读JDK11源码实现的过程中，发现同为<code>java.nio.channels.Selector</code>，是Windows和Linux平台的<code>Selector.open()</code>所构造的Selector的底层实现完全不一样。</p>
+<span id="more"></span>
+<h1 id="selector---从jdk11源码理解java-io复用原理">Selector -
+从JDK11源码理解Java I/O复用原理</h1>
+<p>Selector是Java
+NIO中核心的多路复用选择器。线程可以将SocketChannel与选择键注册到Selector上，而Selector会选出I/O状态符合选择键条件的SocketChannel实例。</p>
+<h2 id="应用层">应用层</h2>
+<p>线程将SocketChannel实例与选择键注册到Selector上：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    socketChannel.register(<span class="built_in">this</span>.selector, SelectionKey.OP_READ);    <span class="comment">// socketChannel is always Writable</span></span><br><span class="line">    <span class="comment">// socketChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);</span></span><br><span class="line">    <span class="built_in">this</span>.selector.wakeup();</span><br><span class="line">&#125; <span class="keyword">catch</span> (ClosedChannelException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Selector可以取出I/O状态符合选择键的SocketChannel集合，遍历处理：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.selector.select();</span><br><span class="line"></span><br><span class="line">    Set&lt;SelectionKey&gt; selectionKeySet = <span class="built_in">this</span>.selector.selectedKeys();</span><br><span class="line">    Iterator&lt;SelectionKey&gt; selectionKeys = selectionKeySet.iterator();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (selectionKeys.hasNext()) &#123;</span><br><span class="line">        <span class="type">SelectionKey</span> <span class="variable">selectionKey</span> <span class="operator">=</span> selectionKeys.next();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (selectionKey.isReadable()) &#123;</span><br><span class="line">            selectionKey.cancel();      <span class="comment">// avoid repeating selecting the same channel</span></span><br><span class="line">            <span class="type">SocketChannel</span> <span class="variable">socketChannel</span> <span class="operator">=</span> (SocketChannel) selectionKey.channel();</span><br><span class="line"></span><br><span class="line">            <span class="type">HttpWorker</span> <span class="variable">httpWorker</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HttpWorker</span>(webRoot, socketChannel);</span><br><span class="line">            <span class="built_in">this</span>.executorService.submit(httpWorker);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        selectionKeys.remove();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="抽象层">抽象层</h2>
+<h3 id="selector">Selector</h3>
+<h4 id="selector.open">Selector.open()</h4>
+<p>外部通过<code>Selector.open()</code>方法就可以</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.nio.channels.Selector;</span><br><span class="line"></span><br><span class="line"><span class="type">Selector</span> <span class="variable">selector</span> <span class="operator">=</span> Selector.open();</span><br></pre></td></tr></table></figure>
+<p>在<code>Selector</code>抽象类中实现为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">Selector</span> <span class="keyword">implements</span> <span class="title class_">Closeable</span> &#123;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Opens a selector.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;p&gt; The new selector is created by invoking the &#123;<span class="doctag">@link</span></span></span><br><span class="line"><span class="comment">     * java.nio.channels.spi.SelectorProvider#openSelector openSelector&#125; method</span></span><br><span class="line"><span class="comment">     * of the system-wide default &#123;<span class="doctag">@link</span></span></span><br><span class="line"><span class="comment">     * java.nio.channels.spi.SelectorProvider&#125; object.  &lt;/p&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span>  A new selector</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span>  IOException</span></span><br><span class="line"><span class="comment">     *          If an I/O error occurs</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Selector <span class="title function_">open</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> SelectorProvider.provider().openSelector();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际上只是一层抽象，具体调用了<code>SelectorProvider</code>来提供和打开<code>Selector</code>实例。</p>
+<h4 id="selector.select">Selector.select()</h4>
+<p>多路复用的核心功能，选出可进行I/O的通道们的键集。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">Selector</span> <span class="keyword">implements</span> <span class="title class_">Closeable</span> &#123;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Selects a set of keys whose corresponding channels are ready for I/O</span></span><br><span class="line"><span class="comment">     * operations.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;p&gt; This method performs a blocking &lt;a href=&quot;#selop&quot;&gt;selection</span></span><br><span class="line"><span class="comment">     * operation&lt;/a&gt;.  It returns only after at least one channel is selected,</span></span><br><span class="line"><span class="comment">     * this selector&#x27;s &#123;<span class="doctag">@link</span> #wakeup wakeup&#125; method is invoked, the current</span></span><br><span class="line"><span class="comment">     * thread is interrupted, or the given timeout period expires, whichever</span></span><br><span class="line"><span class="comment">     * comes first.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;p&gt; This method does not offer real-time guarantees: It schedules the</span></span><br><span class="line"><span class="comment">     * timeout as if by invoking the &#123;<span class="doctag">@link</span> Object#wait(long)&#125; method. &lt;/p&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span>  timeout  If positive, block for up to &#123;<span class="doctag">@code</span> timeout&#125;</span></span><br><span class="line"><span class="comment">     *                  milliseconds, more or less, while waiting for a</span></span><br><span class="line"><span class="comment">     *                  channel to become ready; if zero, block indefinitely;</span></span><br><span class="line"><span class="comment">     *                  must not be negative</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span>  The number of keys, possibly zero,</span></span><br><span class="line"><span class="comment">     *          whose ready-operation sets were updated</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span>  IOException</span></span><br><span class="line"><span class="comment">     *          If an I/O error occurs</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span>  ClosedSelectorException</span></span><br><span class="line"><span class="comment">     *          If this selector is closed</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span>  IllegalArgumentException</span></span><br><span class="line"><span class="comment">     *          If the value of the timeout argument is negative</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> <span class="type">int</span> <span class="title function_">select</span><span class="params">(<span class="type">long</span> timeout)</span> <span class="keyword">throws</span> IOException;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法在Selector抽象类定义，但具体实现位于作为其子类的<code>SelectorImpl</code>实现类中。</p>
+<h5 id="selectorimpl">SelectorImpl</h5>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Base Selector implementation class.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">SelectorImpl</span></span><br><span class="line">    <span class="keyword">extends</span> <span class="title class_">AbstractSelector</span></span><br><span class="line">&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Selects the keys for channels that are ready for I/O operations.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> action  the action to perform, can be null</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> timeout timeout in milliseconds to wait, 0 to not wait, -1 to</span></span><br><span class="line"><span class="comment">     *                wait indefinitely</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="type">int</span> <span class="title function_">doSelect</span><span class="params">(Consumer&lt;SelectionKey&gt; action, <span class="type">long</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> <span class="title function_">lockAndDoSelect</span><span class="params">(Consumer&lt;SelectionKey&gt; action, <span class="type">long</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="built_in">this</span>) &#123;</span><br><span class="line">            ensureOpen();</span><br><span class="line">            <span class="keyword">if</span> (inSelect)</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(<span class="string">&quot;select in progress&quot;</span>);</span><br><span class="line">            inSelect = <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">synchronized</span> (publicSelectedKeys) &#123;</span><br><span class="line">                    <span class="keyword">return</span> doSelect(action, timeout);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                inSelect = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">int</span> <span class="title function_">select</span><span class="params">(<span class="type">long</span> timeout)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">if</span> (timeout &lt; <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Negative timeout&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> lockAndDoSelect(<span class="literal">null</span>, (timeout == <span class="number">0</span>) ? -<span class="number">1</span> : timeout);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="type">int</span> <span class="title function_">select</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> lockAndDoSelect(<span class="literal">null</span>, -<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SelectorImpl的<code>select</code>方法调用了<code>lockAndDoSelect</code>方法。传入的参数表示不执行任何操作，且默认持续等待。</p>
+<p>在<code>lockAndDoSelect</code>方法中，用synchronized关键字保护当前Selector对象，实现并发同步。内部也通过isSelect标记来防止并发select操作，实际执行的方法是<code>doSelect</code>方法，该方法在SelectorImpl类中被定义，但没有实现。具体实现取决于其子类，即实现层的实现。</p>
+<h3 id="selectorprovider">SelectorProvider</h3>
+<p>SelectorPrivider是一个抽象类。</p>
+<h4 id="selectorprovider.provider">SelectorProvider.provider()</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">SelectorProvider</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns the system-wide default selector provider for this invocation of</span></span><br><span class="line"><span class="comment">     * the Java virtual machine.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;p&gt; The first invocation of this method locates the default provider</span></span><br><span class="line"><span class="comment">     * object as follows: &lt;/p&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;ol&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     *   &lt;li&gt;&lt;p&gt; If the system property</span></span><br><span class="line"><span class="comment">     *   &#123;<span class="doctag">@code</span> java.nio.channels.spi.SelectorProvider&#125; is defined then it is</span></span><br><span class="line"><span class="comment">     *   taken to be the fully-qualified name of a concrete provider class.</span></span><br><span class="line"><span class="comment">     *   The class is loaded and instantiated; if this process fails then an</span></span><br><span class="line"><span class="comment">     *   unspecified error is thrown.  &lt;/p&gt;&lt;/li&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     *   &lt;li&gt;&lt;p&gt; If a provider class has been installed in a jar file that is</span></span><br><span class="line"><span class="comment">     *   visible to the system class loader, and that jar file contains a</span></span><br><span class="line"><span class="comment">     *   provider-configuration file named</span></span><br><span class="line"><span class="comment">     *   &#123;<span class="doctag">@code</span> java.nio.channels.spi.SelectorProvider&#125; in the resource</span></span><br><span class="line"><span class="comment">     *   directory &#123;<span class="doctag">@code</span> META-INF/services&#125;, then the first class name</span></span><br><span class="line"><span class="comment">     *   specified in that file is taken.  The class is loaded and</span></span><br><span class="line"><span class="comment">     *   instantiated; if this process fails then an unspecified error is</span></span><br><span class="line"><span class="comment">     *   thrown.  &lt;/p&gt;&lt;/li&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     *   &lt;li&gt;&lt;p&gt; Finally, if no provider has been specified by any of the above</span></span><br><span class="line"><span class="comment">     *   means then the system-default provider class is instantiated and the</span></span><br><span class="line"><span class="comment">     *   result is returned.  &lt;/p&gt;&lt;/li&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;/ol&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * &lt;p&gt; Subsequent invocations of this method return the provider that was</span></span><br><span class="line"><span class="comment">     * returned by the first invocation.  &lt;/p&gt;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span>  The system-wide default selector provider</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> SelectorProvider <span class="title function_">provider</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (lock) &#123;</span><br><span class="line">            <span class="keyword">if</span> (provider != <span class="literal">null</span>)</span><br><span class="line">                <span class="keyword">return</span> provider;</span><br><span class="line">            <span class="keyword">return</span> AccessController.doPrivileged(</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">PrivilegedAction</span>&lt;&gt;() &#123;</span><br><span class="line">                    <span class="keyword">public</span> SelectorProvider <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">                            <span class="keyword">if</span> (loadProviderFromProperty())</span><br><span class="line">                                <span class="keyword">return</span> provider;</span><br><span class="line">                            <span class="keyword">if</span> (loadProviderAsService())</span><br><span class="line">                                <span class="keyword">return</span> provider;</span><br><span class="line">                            provider = sun.nio.ch.DefaultSelectorProvider.create();</span><br><span class="line">                            <span class="keyword">return</span> provider;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个<code>provider()</code>方法是一个synchronized同步锁保护的单例模式，返回SelectorProvider类型的实例。</p>
+<p>具体地，当没有实例时，需要创建实例。</p>
+<p>创建实例通过AccessController来执行特权行为。</p>
+<p>根据官方文档，AccessController被用于控制操作的权限和决策。</p>
+<blockquote>
+<p>The AccessController class is used for access control operations and
+decisions. More specifically, the AccessController class is used for
+three purposes:</p>
+<ul>
+<li>to decide whether an access to a critical system resource is to be
+allowed or denied, based on the security policy currently in
+effect,</li>
+<li>to mark code as being "privileged", thus affecting subsequent access
+determinations, and</li>
+<li>to obtain a "snapshot" of the current calling context so
+access-control decisions from a different context can be made with
+respect to the saved context.</li>
+</ul>
+</blockquote>
+<p>这个AccessController起到三种作用：</p>
+<ol type="1">
+<li>检查权限：决定对关键系统资源的访问是否应该批准；</li>
+<li>授予权限：把代码标记为特权代码，以便执行后续操作；</li>
+<li>保存快照：保存当前调用上下文，以便做来自其它上下文的访问控制决策的时候能够考虑到已保存的上下文。</li>
+</ol>
+<p>具体地，在此处，<code>AccessController.doPrivileged(...)</code>方法起到的是第二个作用，授予权限，执行特权代码：</p>
+<blockquote>
+<p>Performs the specified PrivilegedAction with privileges enabled.</p>
+<p>The action is performed with all of the permissions possessed by the
+caller's protection domain.</p>
+</blockquote>
+<p>该方法的输入参数是一个实现了<code>PrivilegedAction</code>接口的匿名类，该匿名类实现了接口的<code>run()</code>方法。该方法依靠外层提供的特权权限，来实例化一个<code>SelectorProvider</code>。实例化的过程分三种优先级：</p>
+<ol type="1">
+<li><code>loadProviderFromProperty()</code></li>
+<li><code>loadProviderAsService()</code></li>
+<li><code>provider = sun.nio.ch.DefaultSelectorProvider.create()</code></li>
+</ol>
+<h5 id="第一优先级-loadproviderfromproperty">第一优先级
+<code>loadProviderFromProperty</code></h5>
+<p>第一优先级通过系统检查<code>java.nio.channels.spi.SelectorProvider</code>是否存在，如果存在则加载，反之，则返回<code>false</code>。</p>
+<blockquote>
+<p>Service-provider classes for the java.nio.channels package.</p>
+</blockquote>
+<p><code>java.nio.channels.spi</code>包提供了一批ServiceProvider的类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">SelectorProvider</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">loadProviderFromProperty</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">cn</span> <span class="operator">=</span> System.getProperty(<span class="string">&quot;java.nio.channels.spi.SelectorProvider&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (cn == <span class="literal">null</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="meta">@SuppressWarnings(&quot;deprecation&quot;)</span></span><br><span class="line">            <span class="type">Object</span> <span class="variable">tmp</span> <span class="operator">=</span> Class.forName(cn, <span class="literal">true</span>,</span><br><span class="line">                                       ClassLoader.getSystemClassLoader()).newInstance();</span><br><span class="line">            provider = (SelectorProvider)tmp;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException x) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ServiceConfigurationError</span>(<span class="literal">null</span>, x);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IllegalAccessException x) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ServiceConfigurationError</span>(<span class="literal">null</span>, x);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InstantiationException x) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ServiceConfigurationError</span>(<span class="literal">null</span>, x);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (SecurityException x) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ServiceConfigurationError</span>(<span class="literal">null</span>, x);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span> </span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法首先读取检查系统属性中，键<code>java.nio.channels.spi.SelectorProvider</code>是否有设置值。如果没有，则返回false，如果有，用这个值加载SelectorProvider类。</p>
+<p>该方法通过<code>Class.forName</code>方法，指定通过系统类加载器在运行时动态加载系统属性中设置的SelectorProvider类（如指定）。</p>
+<h5 id="第二优先级-loadproviderasservice">第二优先级
+<code>loadProviderAsService</code></h5>
+<p>如果第一优先级所需的<code>java.nio.channels.spi.SelectorProvider</code>不存在，则需要启动第二优先级的加载工作。</p>
+<p>如果<code>META-INF/services</code>中，存放了<code>java.nio.channels.spi.SelectorProvider</code>的jar文件，则通过系统类加载器加载该服务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">SelectorProvider</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">loadProviderAsService</span><span class="params">()</span> &#123;</span><br><span class="line"></span><br><span class="line">        ServiceLoader&lt;SelectorProvider&gt; sl =</span><br><span class="line">            ServiceLoader.load(SelectorProvider.class,</span><br><span class="line">                               ClassLoader.getSystemClassLoader());</span><br><span class="line">        Iterator&lt;SelectorProvider&gt; i = sl.iterator();</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (!i.hasNext())</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">                provider = i.next();</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (ServiceConfigurationError sce) &#123;</span><br><span class="line">                <span class="keyword">if</span> (sce.getCause() <span class="keyword">instanceof</span> SecurityException) &#123;</span><br><span class="line">                    <span class="comment">// Ignore the security exception, try the next provider</span></span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">throw</span> sce;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span> </span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法通过<code>ServiceLoader</code>来加载服务，选取可见的第一个<code>SelectorProvider</code>实例。</p>
+<h5 id="最终优先级-sun.nio.ch.defaultselectorprovider">最终优先级
+<code>sun.nio.ch.DefaultSelectorProvider</code></h5>
+<p>如果上述SelectorProvider都不存在，就会加载<code>sun.nio.ch.DefaultSelectorProvider</code>作为最终选择。</p>
+<p><strong>实际运行中，如果没有实现和配置前两种，默认会启用该最终优先级。</strong></p>
+<p>DefaultSelectorProvider的对外提供统一的接口，内部仅仅是完成对实现类的实例化，而具体实例化什么类，取决于JDK的操作系统版本。</p>
+<h3 id="defaultselectorprovider">DefaultSelectorProvider</h3>
+<h4 id="defaultselector.create">DefaultSelector.create()</h4>
+<p>具体地，该<code>sun.nio.ch.DefaultSelectorProvider</code>对外提供一致接口，其<code>create</code>方法实际上仅仅是一层封装，只是实现了一个<code>new</code>实例化操作，但不同操作系统平台的JDK的内部实现不同：</p>
+<ul>
+<li>在Windows
+JDK11中，其实例化的是<code>sun.nio.ch.WindowsSelectorProvider</code>类。</li>
+<li>在Linux
+JDK11中，其实例化的是<code>sun.nio.ch.EPollSelectorProvider</code>类。</li>
+</ul>
+<p>Windows JDK11：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Creates this platform&#x27;s default SelectorProvider</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DefaultSelectorProvider</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Prevent instantiation.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">DefaultSelectorProvider</span><span class="params">()</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns the default SelectorProvider.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> SelectorProvider <span class="title function_">create</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">sun</span>.nio.ch.WindowsSelectorProvider();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Linux JDK11:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Creates this platform&#x27;s default SelectorProvider</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DefaultSelectorProvider</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Prevent instantiation.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">DefaultSelectorProvider</span><span class="params">()</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns the default SelectorProvider.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> SelectorProvider <span class="title function_">create</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">EPollSelectorProvider</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3
+id="windowsselectorprovider与epollselectorprovider">WindowsSelectorProvider与EPollSelectorProvider</h3>
+<p>这一层都继承自SelectorProviderImpl抽象类，实际上也没有实现什么特别的功能逻辑，只是调用对应的SelectorImpl实现类。</p>
+<p>这一层实现了从SelectorProvider到SelectorImpl的交互。</p>
+<p>具体到每种SelectorImpl是如何实现的，在下一节实现层具体分析。</p>
+<h4
+id="windowsselectorprovider.openselector">WindowsSelectorProvider.openSelector()</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * SelectorProvider for sun.nio.ch.WindowsSelectorImpl.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @author Konstantin Kladko</span></span><br><span class="line"><span class="comment"> * @since 1.4</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WindowsSelectorProvider</span> <span class="keyword">extends</span> <span class="title class_">SelectorProviderImpl</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> AbstractSelector <span class="title function_">openSelector</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">WindowsSelectorImpl</span>(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4
+id="epollselectorprovider.openselector">EPollSelectorProvider.openSelector()</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EPollSelectorProvider</span></span><br><span class="line">    <span class="keyword">extends</span> <span class="title class_">SelectorProviderImpl</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> AbstractSelector <span class="title function_">openSelector</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">EPollSelectorImpl</span>(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> Channel <span class="title function_">inheritedChannel</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> InheritedChannel.getChannel();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="继承关系小结">继承关系小结</h3>
+<h4 id="selector系列">Selector系列</h4>
+<ul>
+<li><code>abstract class Selector</code>
+<ul>
+<li><code>abstract class AbstractSelector extends Selector</code>
+<ul>
+<li><code>abstract class SelectorImpl exntends AbstractSelector</code>
+<ul>
+<li><code>class WindowsSelectorImpl extends SelectorImpl</code></li>
+<li><code>class EPollSelectorImpl extends SelectorImpl</code></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="selectorprovider系列">SelectorProvider系列</h4>
+<ul>
+<li><code>abstract class SelectorProvider</code>
+<ul>
+<li><code>abstract class SelectorProviderImpl extends SelectorProvider</code>
+<ul>
+<li><code>class WindowsSelectorProvider extends SelectorProviderImpl</code></li>
+<li><code>class EPollSelectorProvider extends SelectorProviderImpl</code></li>
+</ul></li>
+</ul></li>
+<li><code>class DefaultSelectorProvider</code></li>
+</ul>
+<h2 id="实现层">实现层</h2>
+<h3 id="windows-jdk11的实现">Windows JDK11的实现</h3>
+<p>在Windows
+JDK11中，其实例化的是<code>sun.nio.ch.WindowsSelectorProvider</code>类返回给上层使用。</p>
+<h4 id="windowsselectorprovider">WindowsSelectorProvider</h4>
+<p>简单回顾一下，WindowsSelectorProvider实现了从对外的SelectorProvider到具体的WindowsSelectorImpl实现类的转接。</p>
+<p>该类继承自<code>SelectorProviderImpl</code>抽象类，是对其的具体实现，供外部抽象层调用，实现的只是转接调用，调用<code>WindowsSelectorImpl</code>这一个实现类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WindowsSelectorProvider</span> <span class="keyword">extends</span> <span class="title class_">SelectorProviderImpl</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> AbstractSelector <span class="title function_">openSelector</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">WindowsSelectorImpl</span>(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="windowsselectorimpl">WindowsSelectorImpl</h4>
+<p>概括地来讲，WindowsSelectorImpl的底层实现是通过JNI接口调用地本地poll方法，但是不是简单调用，而是进行了多线程的改进。</p>
+<p>为什么要采用多线程呢？因为poll方法本身可以处理的文件描述符（file
+descriptor）数量是有限的，一般和select方法类似，不超过1024个。实际的应用场景中，需要并发处理的文件描述符是完全有可能超过这个上限的。Windows
+JDK11中的实现则采用多线程对poll进行改进，一个线程能处理的文件描述符数量是有限的，那么如果文件描述符数量很多，用多个线程分摊处理不就好了么。</p>
+<h5 id="主要数据结构">主要数据结构</h5>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 13%" />
+<col style="width: 61%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>类型</th>
+<th>变量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SelectionKeyImpl[]</code></td>
+<td>channelArray</td>
+<td>The list of SelectableChannels serviced by this Selector. Every mod
+MAX_SELECTABLE_FDS entry is bogus, to align this array with the poll
+array, where the corresponding entry is occupied by the
+wakeupSocket</td>
+</tr>
+<tr class="even">
+<td><code>PollArrayWrapper</code></td>
+<td>pollWrapper</td>
+<td>The global native poll array holds file decriptors and event
+masks</td>
+</tr>
+<tr class="odd">
+<td><code>List&lt;SelectThread&gt;</code></td>
+<td>threads</td>
+<td>A list of helper threads for select.</td>
+</tr>
+<tr class="even">
+<td><code>Pipe</code></td>
+<td>wakeupPipe</td>
+<td>Pipe used as a wakeup object.</td>
+</tr>
+<tr class="odd">
+<td><code>FdMap</code></td>
+<td>fdMap</td>
+<td>Maps file descriptors to their indices in pollArray</td>
+</tr>
+<tr class="even">
+<td><code>SubSelector</code></td>
+<td>subSelector</td>
+<td>SubSelector for the main thread</td>
+</tr>
+<tr class="odd">
+<td><code>Object</code></td>
+<td>interruptLock</td>
+<td>Lock for interrupt triggering and clearing</td>
+</tr>
+<tr class="even">
+<td><code>Object</code></td>
+<td>updateLock</td>
+<td>pending new registrations/updates, queued by implRegister and
+setEventOps</td>
+</tr>
+<tr class="odd">
+<td><code>Deque&lt;SelectionKeyImpl&gt;</code></td>
+<td>newKeys</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>Deque&lt;SelectionKeyImpl&gt;</code></td>
+<td>updateKeys</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h5
+id="windowsselectorimpl.doselect">WindowsSelectorImpl.doSelect()</h5>
+<p>Windows平台JDK11是如何select出对应状态的SocketChannel的呢？</p>
+<p>抽象层的<code>Selector.select()</code>调用由<code>SelectorImpl.select()</code>实现，而该实现主要是调用了<code>SelectorImpl.lockAndDoSelect()</code>，其中调用<code>SelectorImpl.doSelect()</code>，该方法在Windows平台的JDK11中由<code>WindowsSelectorImpl.doSelect()</code>具体实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * A multi-threaded implementation of Selector for Windows.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Konstantin Kladko</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Mark Reinhold</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">WindowsSelectorImpl</span> <span class="keyword">extends</span> <span class="title class_">SelectorImpl</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="type">int</span> <span class="title function_">doSelect</span><span class="params">(Consumer&lt;SelectionKey&gt; action, <span class="type">long</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">assert</span> Thread.holdsLock(<span class="built_in">this</span>);</span><br><span class="line">        <span class="built_in">this</span>.timeout = timeout; <span class="comment">// set selector timeout</span></span><br><span class="line">        processUpdateQueue();</span><br><span class="line">        processDeregisterQueue();</span><br><span class="line">        <span class="keyword">if</span> (interruptTriggered) &#123;</span><br><span class="line">            resetWakeupSocket();</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Calculate number of helper threads needed for poll. If necessary</span></span><br><span class="line">        <span class="comment">// threads are created here and start waiting on startLock</span></span><br><span class="line">        adjustThreadsCount();</span><br><span class="line">        finishLock.reset(); <span class="comment">// reset finishLock</span></span><br><span class="line">        <span class="comment">// Wakeup helper threads, waiting on startLock, so they start polling.</span></span><br><span class="line">        <span class="comment">// Redundant threads will exit here after wakeup.</span></span><br><span class="line">        startLock.startThreads();</span><br><span class="line">        <span class="comment">// do polling in the main thread. Main thread is responsible for</span></span><br><span class="line">        <span class="comment">// first MAX_SELECTABLE_FDS entries in pollArray.</span></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            begin();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                subSelector.poll();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                finishLock.setException(e); <span class="comment">// Save this exception</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// Main thread is out of poll(). Wakeup others and wait for them</span></span><br><span class="line">            <span class="keyword">if</span> (threads.size() &gt; <span class="number">0</span>)</span><br><span class="line">                finishLock.waitForHelperThreads();</span><br><span class="line">          &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">              end();</span><br><span class="line">          &#125;</span><br><span class="line">        <span class="comment">// Done with poll(). Set wakeupSocket to nonsignaled  for the next run.</span></span><br><span class="line">        finishLock.checkForException();</span><br><span class="line">        processDeregisterQueue();</span><br><span class="line">        <span class="type">int</span> <span class="variable">updated</span> <span class="operator">=</span> updateSelectedKeys(action);</span><br><span class="line">        <span class="comment">// Done with poll(). Set wakeupSocket to nonsignaled  for the next run.</span></span><br><span class="line">        resetWakeupSocket();</span><br><span class="line">        <span class="keyword">return</span> updated;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用<code>WindowsSelectorImpl.doSelect()</code>方法，执行的流程主要为：</p>
+<ol type="1">
+<li>首先进行了一些状态更新，处理新的注册和修改、被取消的键集。</li>
+<li>随后计算所需线程数量，准备多线程poll操作所需的辅助线程（helper
+threads）。
+<ol type="1">
+<li>如果主线程就足够处理当前这么多的描述符了，那就不需要再启动辅助线程了；</li>
+<li>如果主线程没法独自处理大量的描述符，那就需要创建并启动辅助线程来帮忙。</li>
+</ol></li>
+<li>主线程本身当然是要承担poll的工作的，即<code>subSelector.poll()</code>，这是主线程自己调用自己的subSelector在执行poll操作。</li>
+<li>如果有辅助线程帮忙，即<code>threads.size()&gt;0</code>的情况，那么就需要通过<code>finishLock.waitForHelperThreads()</code>的同步操作来等待辅助线程们完成他们的工作。</li>
+<li>至此，poll的处理就完成了，此后进行一些收尾的检查，状态的更新，即可返回本次<code>doSelect</code>操作更新过的键的数量。</li>
+</ol>
+<h4
+id="windowsselectorimpl.selectthread">WindowsSelectorImpl.SelectThread</h4>
+<h5
+id="windowsselectorimpl.selectthread.run">WindowsSelectorImpl.SelectThread.run()</h5>
+<p>辅助线程是<code>WindowsSelectorImpl.SelectThread</code>类的实例，线程类最核心的内容就是其实现的<code>run</code>方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Represents a helper thread used for select.</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">SelectThread</span> <span class="keyword">extends</span> <span class="title class_">Thread</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span> index; <span class="comment">// index of this thread</span></span><br><span class="line">    <span class="keyword">final</span> SubSelector subSelector;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">long</span> <span class="variable">lastRun</span> <span class="operator">=</span> <span class="number">0</span>; <span class="comment">// last run number</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">boolean</span> zombie;</span><br><span class="line">    <span class="comment">// Creates a new thread</span></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">SelectThread</span><span class="params">(<span class="type">int</span> i)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>(<span class="literal">null</span>, <span class="literal">null</span>, <span class="string">&quot;SelectorHelper&quot;</span>, <span class="number">0</span>, <span class="literal">false</span>);</span><br><span class="line">        <span class="built_in">this</span>.index = i;</span><br><span class="line">        <span class="built_in">this</span>.subSelector = <span class="keyword">new</span> <span class="title class_">SubSelector</span>(i);</span><br><span class="line">        <span class="comment">//make sure we wait for next round of poll</span></span><br><span class="line">        <span class="built_in">this</span>.lastRun = startLock.runsCounter;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">makeZombie</span><span class="params">()</span> &#123;</span><br><span class="line">        zombie = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isZombie</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> zombie;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="literal">true</span>) &#123; <span class="comment">// poll loop</span></span><br><span class="line">            <span class="comment">// wait for the start of poll. If this thread has become</span></span><br><span class="line">            <span class="comment">// redundant, then exit.</span></span><br><span class="line">            <span class="keyword">if</span> (startLock.waitForStart(<span class="built_in">this</span>)) &#123;</span><br><span class="line">                subSelector.freeFDSetBuffer();</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// call poll()</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                subSelector.poll(index);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                <span class="comment">// Save this exception and let other threads finish.</span></span><br><span class="line">                finishLock.setException(e);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// notify main thread, that this thread has finished, and</span></span><br><span class="line">            <span class="comment">// wakeup others, if this thread is the first to finish.</span></span><br><span class="line">            finishLock.threadFinished();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不难发现，辅助线程的线程类的实现中，其执行的核心操作其实就是调用了<code>subSelector.poll(index)</code>，以此对本线程负责的文件描述符进行poll操作。</p>
+<p>那这个<code>subSelector</code>又是怎么做的呢？</p>
+<h4
+id="windowsselectorimpl.subselector">WindowsSelectorImpl.SubSelector</h4>
+<p>前面介绍了主线程和辅助线程，两者都有一个subSelector实例，他们在执行poll操作的时候都是调用的<code>subSelector.poll()</code>。</p>
+<h5
+id="windowsselectorimpl.subselector.poll">WindowsSelectorImpl.SubSelector.poll()</h5>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">SubSelector</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span> pollArrayIndex; <span class="comment">// starting index in pollArray to poll</span></span><br><span class="line">    <span class="comment">// These arrays will hold result of native select().</span></span><br><span class="line">    <span class="comment">// The first element of each array is the number of selected sockets.</span></span><br><span class="line">    <span class="comment">// Other elements are file descriptors of selected sockets.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span>[] readFds = <span class="keyword">new</span> <span class="title class_">int</span> [MAX_SELECTABLE_FDS + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span>[] writeFds = <span class="keyword">new</span> <span class="title class_">int</span> [MAX_SELECTABLE_FDS + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span>[] exceptFds = <span class="keyword">new</span> <span class="title class_">int</span> [MAX_SELECTABLE_FDS + <span class="number">1</span>];</span><br><span class="line">    <span class="comment">// Buffer for readfds, writefds and exceptfds structs that are passed</span></span><br><span class="line">    <span class="comment">// to native select().</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">long</span> <span class="variable">fdsBuffer</span> <span class="operator">=</span> unsafe.allocateMemory(SIZEOF_FD_SET * <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">SubSelector</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.pollArrayIndex = <span class="number">0</span>; <span class="comment">// main thread</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">SubSelector</span><span class="params">(<span class="type">int</span> threadIndex)</span> &#123; <span class="comment">// helper threads</span></span><br><span class="line">        <span class="built_in">this</span>.pollArrayIndex = (threadIndex + <span class="number">1</span>) * MAX_SELECTABLE_FDS;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> <span class="title function_">poll</span><span class="params">()</span> <span class="keyword">throws</span> IOException&#123; <span class="comment">// poll for the main thread</span></span><br><span class="line">        <span class="keyword">return</span> poll0(pollWrapper.pollArrayAddress,</span><br><span class="line">                     Math.min(totalChannels, MAX_SELECTABLE_FDS),</span><br><span class="line">                     readFds, writeFds, exceptFds, timeout, fdsBuffer);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="type">int</span> index)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="comment">// poll for helper threads</span></span><br><span class="line">        <span class="keyword">return</span>  poll0(pollWrapper.pollArrayAddress +</span><br><span class="line">                 (pollArrayIndex * PollArrayWrapper.SIZE_POLLFD),</span><br><span class="line">                 Math.min(MAX_SELECTABLE_FDS,</span><br><span class="line">                         totalChannels - (index + <span class="number">1</span>) * MAX_SELECTABLE_FDS),</span><br><span class="line">                 readFds, writeFds, exceptFds, timeout, fdsBuffer);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">poll0</span><span class="params">(<span class="type">long</span> pollAddress, <span class="type">int</span> numfds,</span></span><br><span class="line"><span class="params">         <span class="type">int</span>[] readFds, <span class="type">int</span>[] writeFds, <span class="type">int</span>[] exceptFds, <span class="type">long</span> timeout, <span class="type">long</span> fdsBuffer)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>查看源码可知，SubSelector的<code>poll()</code>和<code>poll(index)</code>方法实际上都是对<code>poll0()</code>方法的一层适配封装，实际上调用的就是<code>poll0()</code>。</p>
+<h5
+id="windowsselectorimpl.subselector.poll0">WindowsSelectorImpl.SubSelector.poll0()</h5>
+<p>从上面的源码可以看到，<code>poll0</code>方法并不是在Java中实现的，而是通过JNI调用的本地实现。</p>
+<h3 id="linux-jdk11的实现">Linux JDK11的实现</h3>
+<p>在Linux
+JDK11中，其实例化的是<code>sun.nio.ch.EPollSelectorProvider</code>类返回给上层使用。</p>
+<h4 id="epollselectorprovider">EPollSelectorProvider</h4>
+<p>类似的，Linux
+JDK11是通过EPollSelectorProvider提供外部访问接口的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EPollSelectorProvider</span></span><br><span class="line">    <span class="keyword">extends</span> <span class="title class_">SelectorProviderImpl</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> AbstractSelector <span class="title function_">openSelector</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">EPollSelectorImpl</span>(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Channel <span class="title function_">inheritedChannel</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">return</span> InheritedChannel.getChannel();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该<code>openSelector</code>方法主要是通过EPollSelectorImpl实现类来实例化一个EPollSelector并返回。</p>
+<h4 id="epollselectorimpl">EPollSelectorImpl</h4>
+<h5 id="epollselectorimpl.doselector">EPollSelectorImpl.doSelector</h5>
+<p>Linux平台JDK11是如何select出对应状态的SocketChannel的呢？</p>
+<p>实质上是调用的<code>EPoll.wait</code>方法来返回已经就绪的文件描述符数量。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Linux epoll based Selector implementation</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">EPollSelectorImpl</span> <span class="keyword">extends</span> <span class="title class_">SelectorImpl</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">    </span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="type">int</span> <span class="title function_">doSelect</span><span class="params">(Consumer&lt;SelectionKey&gt; action, <span class="type">long</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">assert</span> Thread.holdsLock(<span class="built_in">this</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// epoll_wait timeout is int</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">to</span> <span class="operator">=</span> (<span class="type">int</span>) Math.min(timeout, Integer.MAX_VALUE);</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">blocking</span> <span class="operator">=</span> (to != <span class="number">0</span>);</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">timedPoll</span> <span class="operator">=</span> (to &gt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">int</span> numEntries;</span><br><span class="line">        processUpdateQueue();</span><br><span class="line">        processDeregisterQueue();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            begin(blocking);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">do</span> &#123;</span><br><span class="line">                <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> timedPoll ? System.nanoTime() : <span class="number">0</span>;</span><br><span class="line">                numEntries = EPoll.wait(epfd, pollArrayAddress, NUM_EPOLLEVENTS, to);</span><br><span class="line">                <span class="keyword">if</span> (numEntries == IOStatus.INTERRUPTED &amp;&amp; timedPoll) &#123;</span><br><span class="line">                    <span class="comment">// timed poll interrupted so need to adjust timeout</span></span><br><span class="line">                    <span class="type">long</span> <span class="variable">adjust</span> <span class="operator">=</span> System.nanoTime() - startTime;</span><br><span class="line">                    to -= TimeUnit.MILLISECONDS.convert(adjust, TimeUnit.NANOSECONDS);</span><br><span class="line">                    <span class="keyword">if</span> (to &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="comment">// timeout expired so no retry</span></span><br><span class="line">                        numEntries = <span class="number">0</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">while</span> (numEntries == IOStatus.INTERRUPTED);</span><br><span class="line">            <span class="keyword">assert</span> IOStatus.check(numEntries);</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            end(blocking);</span><br><span class="line">        &#125;</span><br><span class="line">        processDeregisterQueue();</span><br><span class="line">        <span class="keyword">return</span> processEvents(numEntries, action);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* more */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体地，在<code>EPollSelectorImpl.doSelect</code>方法中，和WindowsSelectorImpl中的实现类似：</p>
+<ol type="1">
+<li>首先都有必要检查和更新状态，处理修改队列和取消注册队列；</li>
+<li>通过<code>EPoll.wait</code>方法来获取处于就绪状态的I/O文件描述符数量；</li>
+<li>最后更新状态，返回本次<code>doSelect</code>更新过的键的数量。</li>
+</ol>
+<h4 id="epoll">EPoll</h4>
+<p>EPoll作为Linux内核提供的多路复用器，JDK11选择通过JNI接口来调用其功能。</p>
+<p>JDK11中<code>EPoll</code>类是一个简易的包装类，epoll的实现不由JDK负责。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Provides access to the Linux epoll facility.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">EPoll</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">EPoll</span><span class="params">()</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">Unsafe</span> <span class="variable">unsafe</span> <span class="operator">=</span> Unsafe.getUnsafe();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * typedef union epoll_data &#123;</span></span><br><span class="line"><span class="comment">     *     void *ptr;</span></span><br><span class="line"><span class="comment">     *     int fd;</span></span><br><span class="line"><span class="comment">     *     __uint32_t u32;</span></span><br><span class="line"><span class="comment">     *     __uint64_t u64;</span></span><br><span class="line"><span class="comment">     *  &#125; epoll_data_t;</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * struct epoll_event &#123;</span></span><br><span class="line"><span class="comment">     *     __uint32_t events;</span></span><br><span class="line"><span class="comment">     *     epoll_data_t data;</span></span><br><span class="line"><span class="comment">     * &#125;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">SIZEOF_EPOLLEVENT</span>   <span class="operator">=</span> eventSize();</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">OFFSETOF_EVENTS</span>     <span class="operator">=</span> eventsOffset();</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">OFFSETOF_FD</span>         <span class="operator">=</span> dataOffset();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// opcodes</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLL_CTL_ADD</span>  <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLL_CTL_DEL</span>  <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLL_CTL_MOD</span>  <span class="operator">=</span> <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// events</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLLIN</span>   <span class="operator">=</span> <span class="number">0x1</span>;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLLOUT</span>  <span class="operator">=</span> <span class="number">0x4</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// flags</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EPOLLONESHOT</span>   <span class="operator">=</span> (<span class="number">1</span> &lt;&lt; <span class="number">30</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Allocates a poll array to handle up to &#123;<span class="doctag">@code</span> count&#125; events.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="type">long</span> <span class="title function_">allocatePollArray</span><span class="params">(<span class="type">int</span> count)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> unsafe.allocateMemory(count * SIZEOF_EPOLLEVENT);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Free a poll array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">freePollArray</span><span class="params">(<span class="type">long</span> address)</span> &#123;</span><br><span class="line">        unsafe.freeMemory(address);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns event[i];</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="type">long</span> <span class="title function_">getEvent</span><span class="params">(<span class="type">long</span> address, <span class="type">int</span> i)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> address + (SIZEOF_EPOLLEVENT*i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns event-&gt;data.fd</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="type">int</span> <span class="title function_">getDescriptor</span><span class="params">(<span class="type">long</span> eventAddress)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> unsafe.getInt(eventAddress + OFFSETOF_FD);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Returns event-&gt;events</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="type">int</span> <span class="title function_">getEvents</span><span class="params">(<span class="type">long</span> eventAddress)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> unsafe.getInt(eventAddress + OFFSETOF_EVENTS);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// -- Native methods --</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">eventSize</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">eventsOffset</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">dataOffset</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">create</span><span class="params">()</span> <span class="keyword">throws</span> IOException;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">ctl</span><span class="params">(<span class="type">int</span> epfd, <span class="type">int</span> opcode, <span class="type">int</span> fd, <span class="type">int</span> events)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">wait</span><span class="params">(<span class="type">int</span> epfd, <span class="type">long</span> pollAddress, <span class="type">int</span> numfds, <span class="type">int</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        IOUtil.load();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="epoll.wait">EPoll.wait</h5>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">native</span> <span class="type">int</span> <span class="title function_">wait</span><span class="params">(<span class="type">int</span> epfd, <span class="type">long</span> pollAddress, <span class="type">int</span> numfds, <span class="type">int</span> timeout)</span></span><br><span class="line">        <span class="keyword">throws</span> IOException;</span><br></pre></td></tr></table></figure>
+<p>该方法调用的应该是Linux中的<code>epoll_wait</code>系统调用。根据<code>man epoll_wait</code>查阅的Linux手册，具体说明：</p>
+<blockquote>
+<p>The epoll_wait() system call waits for events on the epoll(7)
+instance referred to by the file descriptor epfd. The memory area
+pointed to by events will contain the events that will be available for
+the caller. Up to maxevents are returned by epoll_wait(). The maxevents
+argument must be greater than zero.</p>
+<p>The timeout argument specifies the number of milliseconds that
+epoll_wait() will block.</p>
+</blockquote>
+<p>也就是说，JDK调用的<code>EPoll.wait</code>方法会在timeout时间内阻塞等待epoll的文件描述符epfd所引用的事件发生，发生后，其返回的结果是代表事件数量的整数。</p>
+<h2 id="总结">总结</h2>
+<p>从表层的<code>Selector</code>查到底层的<code>WindowsSelectorImpl</code>与<code>EPollImpl</code>，经过一层层抽丝剥茧，可以看到JDK在设计上清晰地体现着将抽象与实现分离的“依赖倒置原则”——顶层调用不应该依赖于底层实现，底层实现也不应该针对于顶层调用，双方都应该依赖于抽象。</p>
+<p>考虑到Linux内核已经提供了好用的epoll多路复用，足以处理大规模的并发连接，JDK11通过JNI接口对epoll相关的系统调用进行本地调用即可，其实现也显得相对简单。Windows并未提供Epoll这样的多路复用模型，为解决poll存在的并发连接数量有限的问题，JDK11通过分而治之的分治思想，拉辅助线程来分担任务，通过实现动态多线程poll巧妙地实现了处理大量并发连接的能力。</p>
+<p>最终，无论是Windows还是Linux，要想研究多路复用机制的更深层的实现原理，还是需要研究操作系统层级的实现原理。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/Selector-%E4%BB%8EJDK11%E6%BA%90%E7%A0%81%E7%90%86%E8%A7%A3Java-I-O%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86/" title="Selector - 从JDK11源码理解Java I&#x2F;O复用原理">https://heary.cn/posts/Selector-从JDK11源码理解Java-I-O复用原理/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
+              <a href="/tags/NIO/" rel="tag"><i class="fa fa-tag"></i> NIO</a>
+              <a href="/tags/JDK/" rel="tag"><i class="fa fa-tag"></i> JDK</a>
+              <a href="/tags/I-O-Multiplexing/" rel="tag"><i class="fa fa-tag"></i> I/O Multiplexing</a>
+              <a href="/tags/Poll/" rel="tag"><i class="fa fa-tag"></i> Poll</a>
+              <a href="/tags/EPoll/" rel="tag"><i class="fa fa-tag"></i> EPoll</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/HTTP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/" rel="prev" title="HTTP服务器压力测试">
+                  <i class="fa fa-chevron-left"></i> HTTP服务器压力测试
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/%E5%88%9D%E8%AF%86%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%EF%BC%9ACAP%E5%AE%9A%E7%90%86%E4%B8%8EBASE%E7%90%86%E8%AE%BA/" rel="next" title="初识分布式系统：CAP定理与BASE理论">
+                  初识分布式系统：CAP定理与BASE理论 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"b27faccbcce470ecdf9539b3b7627dfd"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

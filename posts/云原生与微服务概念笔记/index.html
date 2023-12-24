@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="WmzZoAIhtw8L5PpX">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha256-xejo6yLi6vGtAjcMIsY8BHdKsLg7QynVlFMzdQgUuy8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"heary.cn","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.12.3","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"post_block":"zoomIn","post_header":"zoomIn","post_body":"fadeInUp","coll_header":"fadeInLeft","sidebar":"zoomIn"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="云原生与微服务概念入门。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="云原生与微服务概念笔记">
+<meta property="og:url" content="https://heary.cn/posts/%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Heary&#39;s Blog">
+<meta property="og:description" content="云原生与微服务概念入门。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-12-28T09:16:14.000Z">
+<meta property="article:modified_time" content="2022-08-07T04:02:09.876Z">
+<meta property="article:author" content="Heary">
+<meta property="article:tag" content="Cloud">
+<meta property="article:tag" content="Cloud Native">
+<meta property="article:tag" content="Microservices">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://heary.cn/posts/%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://heary.cn/posts/%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/","path":"posts/云原生与微服务概念笔记/","title":"云原生与微服务概念笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>云原生与微服务概念笔记 | Heary's Blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135282529-1"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-135282529-1","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?93bca42dda78417b488ac006a6ac5444"></script>
+
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{&quot;token&quot;: &quot;e56a1ace8bf142f3b73bedc96953a959&quot;}'></script>
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Heary's Blog" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Heary's Blog" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Heary's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">渡口缀满灯花</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">186</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">146</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0"><span class="nav-text">云原生与微服务概念笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E6%9E%B6%E6%9E%84"><span class="nav-text">1 云原生架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%91%E8%AE%A1%E7%AE%97%E7%9A%84%E5%8E%86%E5%8F%B2"><span class="nav-text">1.1 云计算的历史</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E8%AE%A1%E7%AE%97%E7%9A%84%E5%9F%BA%E7%A1%80%E8%99%9A%E6%8B%9F%E5%8C%96%E6%8A%80%E6%9C%AF"><span class="nav-text">1.1.1 云计算的基础：虚拟化技术</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%9A%84%E4%BA%91%E8%AE%A1%E7%AE%97"><span class="nav-text">1.1.2 基于虚拟机的云计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%8C%96%E5%92%8C%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92"><span class="nav-text">1.1.3 容器化和容器编排</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E8%AE%A1%E7%AE%97%E6%BC%94%E8%BF%9B%E6%80%BB%E7%BB%93"><span class="nav-text">1.1.4 云计算演进总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-text">1.2 云原生是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E5%87%BA%E7%8E%B0%E7%9A%84%E8%83%8C%E6%99%AF"><span class="nav-text">1.2.1 云原生出现的背景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="nav-text">1.2.2 云原生的定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E12%E5%9B%A0%E7%B4%A0"><span class="nav-text">1.2.3 云原生与12因素</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E7%9A%84%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84"><span class="nav-text">1.3 云原生的基础架构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1"><span class="nav-text">1.3.1 微服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8"><span class="nav-text">1.3.2 容器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%BD%91%E7%BB%9C"><span class="nav-text">1.3.3 服务网络</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#devops"><span class="nav-text">1.3.4 DevOps</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">1.4 小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E8%BF%B0"><span class="nav-text">2 微服务概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E7%9A%84%E6%BC%94%E8%BF%9B"><span class="nav-text">2.1 系统架构的演进</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-text">2.1.1 单体架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9E%82%E7%9B%B4%E5%88%86%E5%B1%82%E6%9E%B6%E6%9E%84"><span class="nav-text">2.1.2 垂直分层架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9D%A2%E5%90%91%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84soaservice-oriented-architecture"><span class="nav-text">2.1.3
+面向服务架构SOA(Service-Oriented Architecture)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84"><span class="nav-text">2.1.4 微服务架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E6%9E%B6%E6%9E%84-1"><span class="nav-text">2.1.5 云原生架构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A1%86%E6%9E%B6"><span class="nav-text">2.2 常见的微服务框架</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#java%E4%B8%AD%E7%9A%84spring-cloud%E4%B8%8Edubbo%E6%A1%86%E6%9E%B6"><span class="nav-text">2.2.1 Java中的Spring
+Cloud与Dubbo框架</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#go%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84go-kit%E4%B8%8Ego-micro%E6%A1%86%E6%9E%B6"><span class="nav-text">2.2.2 Go语言中的Go Kit与Go
+Micro框架</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E8%AE%BE%E8%AE%A1%E7%9A%84%E5%85%AD%E5%A4%A7%E5%8E%9F%E5%88%99"><span class="nav-text">2.3 微服务设计的六大原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1"><span class="nav-text">2.4 领域驱动设计</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Heary"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Heary</p>
+  <div class="site-description" itemprop="description">养天地正气 法古今完人</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">186</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/HearyShen" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;HearyShen" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/jiayun-shen/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;jiayun-shen&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:jiayun.shen@foxmail.com" title="E-Mail → mailto:jiayun.shen@foxmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://heary.cn/" title="https:&#x2F;&#x2F;heary.cn">Heary's Blog(Main)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hearyshen.github.io/" title="https:&#x2F;&#x2F;hearyshen.github.io" rel="noopener" target="_blank">Heary's Blog(Mirror)</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://lonelyone.cn/" title="http:&#x2F;&#x2F;lonelyone.cn" rel="noopener" target="_blank">Lonelyone.cn</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://piaoyu.org/" title="http:&#x2F;&#x2F;piaoyu.org" rel="noopener" target="_blank">piaoyu.org</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://transformerswsz.github.io/" title="https:&#x2F;&#x2F;transformerswsz.github.io" rel="noopener" target="_blank">Swift的博客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://log4me.github.io/" title="https:&#x2F;&#x2F;log4me.github.io&#x2F;" rel="noopener" target="_blank">logme's blog</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://lossherl.github.io/" title="https:&#x2F;&#x2F;lossherl.github.io&#x2F;" rel="noopener" target="_blank">Sherl's</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+  <a href="https://github.com/HearyShen" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://heary.cn/posts/%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Heary">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Heary's Blog">
+      <meta itemprop="description" content="养天地正气 法古今完人">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="云原生与微服务概念笔记 | Heary's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          云原生与微服务概念笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-12-28 17:16:14" itemprop="dateCreated datePublished" datetime="2020-12-28T17:16:14+08:00">2020-12-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-07 12:02:09" itemprop="dateModified" datetime="2022-08-07T12:02:09+08:00">2022-08-07</time>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>云原生与微服务概念入门。</p>
+<span id="more"></span>
+<h1 id="云原生与微服务概念笔记">云原生与微服务概念笔记</h1>
+<p>参考书籍：</p>
+<blockquote>
+<p>朱荣鑫，黄迪璇，张天. Go语言高并发与微服务实战[M].
+北京：中国铁道出版社有限公司，2020.</p>
+</blockquote>
+<h2 id="云原生架构">1 云原生架构</h2>
+<h3 id="云计算的历史">1.1 云计算的历史</h3>
+<h4 id="云计算的基础虚拟化技术">1.1.1 云计算的基础：虚拟化技术</h4>
+<p>虚拟化是云计算的基石。</p>
+<ul>
+<li>1955年，MIT的John
+McCarthy提出<strong>time-sharing</strong>技术。</li>
+<li>1959年6月，Christopher Strachey在国际信息处理大会发表《Time Sharing
+in Large Fast Computer》论文，提出<strong>虚拟化</strong>概念。</li>
+<li>1965年8月，IBM推出TSS(Time Sharing System)和VMM(Virtual Machine
+Monitor)，是最原始的虚拟机技术。</li>
+<li>20世纪60年代中期，美科学家HCR Licklider提出计算机互联系统，Bob
+Taylor和Larry Robert开发<strong>ARPANET</strong>。</li>
+<li>1978年，IBM获得<strong>RAID</strong>专利，融物理设备为LUN(Logical
+Unit Number)，首次将虚拟化引入存储。</li>
+<li>1990，Unity Computing概念复苏，亦称Grid
+Computing，旨在实现公共计算服务给全世界用户使用。</li>
+<li>1998年，VMware成立并首次引入x86虚拟化技术。</li>
+<li>2000年，IEEE颁布<strong>VPN(Virtual Private
+Network)</strong>标准草案。</li>
+<li>2002年，Amazon上线<strong>AWS(Amazon.com Web
+Service)</strong>，旨在商品目录以SOAP接口开放。</li>
+<li>2005年，开源虚拟机Xen 3.0发布，支持Intel VT和IA64。</li>
+<li>2006年10月，以色列创业公司Qumranet宣布<strong>KVM</strong>诞生，且KVM模块的源码成为Linux内核源码的一部分。</li>
+<li>2009年4月，VMware推出首款云操作系统VMware vSphere。</li>
+</ul>
+<h4 id="基于虚拟机的云计算">1.1.2 基于虚拟机的云计算</h4>
+<p>虚拟化技术成熟，云计算市场出现。</p>
+<ul>
+<li>2006年，AWS推出S3(Simple Storage Service)和EC2(Elastic Compute
+Cloud)。</li>
+<li>2007年，IBM发布云计算商业解决方案，推出Blue Cloud计划。</li>
+<li>2008年，Google App Engine发布，用于Web开发和托管。</li>
+<li>2009年，Heroku推出首款公有云PaaS(Platform as a Service)。</li>
+<li>2010年，微软推出Azure。</li>
+<li>2010年，Rackspace Hosting和NASA推出OpenStack开源云软件计划。</li>
+<li>2011年，Pivotal推出开源PaaS——Cloud Foundry。</li>
+<li>2013年，Docker发布，其使用LXC并封装一些新功能。</li>
+<li>2014年，AWS推出Lambda，在AWS中直接运行代码而无需考虑服务器配置和管理，即FaaS(Function
+as a Service)、Serverless。</li>
+</ul>
+<p>云计算模式：</p>
+<ol type="1">
+<li>IaaS：Infrastructure as a Service，提供基础资源。</li>
+<li>SaaS：Software as a
+Service，提供搭建、实施、维护等一系列的软件服务。拿来即用。</li>
+<li>PaaS：Platform as a
+Service，是SaaS的延申，抽象硬件和操作系统，对外提供运行时环境作为部署平台，便于扩展。</li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>类型</th>
+<th>传统IT</th>
+<th>IaaS</th>
+<th>PaaS</th>
+<th>SaaS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>应用程序</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>数据</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>运行时</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>中间件</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>操作系统</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>虚拟化</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>服务器</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="even">
+<td>存储</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr class="odd">
+<td>网络</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>×表示云计算厂商不负责，√表示云计算厂商负责。</li>
+</ul>
+<h4 id="容器化和容器编排">1.1.3 容器化和容器编排</h4>
+<p>容器化本质上是虚拟化的改进。</p>
+<p>虚拟化通过Hypervisor分离操作系统，容器化共享操作系统。</p>
+<p>LXC(Linux
+Container)侧重容器运行环境的资源隔离和限制，类似进程沙箱，而没有容器镜像打包技术，所以没有普及。</p>
+<p>Docker在LXC的基础之上，建立了一套镜像打包和运行机制，将应用程序和依赖项打包成镜像文件，换别的Docker中也能运行，实现Build,
+Ship and Run。</p>
+<p>容器编排技术经过Mesos、Swarm和Kubernetes三家竞争，最后随着Kubernetes的成熟及其与Docker的融合，PaaS技术的主流路线过渡到了Kubernetes
+Docker。2018年，Kubernetes占据统治地位。</p>
+<h4 id="云计算演进总结">1.1.4 云计算演进总结</h4>
+<p>企业降低对IT基础设施的直接投入，而是通过上云来获取计算和存储能力，按时按需计费。</p>
+<p>云计算降低了IT支出，降低了行业技术壁垒。</p>
+<h3 id="云原生是什么">1.2 云原生是什么</h3>
+<h4 id="云原生出现的背景">1.2.1 云原生出现的背景</h4>
+<p>移动互联网，业务高速发展，快速迭代。</p>
+<h4 id="云原生的定义">1.2.2 云原生的定义</h4>
+<p>Pivotal（云原生应用提出者）：</p>
+<ol type="1">
+<li>DevOps</li>
+<li>持续集成</li>
+<li>微服务架构</li>
+<li>容器化</li>
+</ol>
+<p>CNCF(Cloud Native Computing Foundation)：</p>
+<ol type="1">
+<li>应用容器化</li>
+<li>面向微服务架构</li>
+<li>应用支持容器的编排调度</li>
+</ol>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://github.com/cncf/foundation/blob/master/charter.md#1-mission-of-the-cloud-native-computing-foundation">Mission
+of the Cloud Native Computing Foundation</a></p>
+<p>The Foundation’s mission is to make cloud native computing
+ubiquitous. The CNCF Cloud Native Definition v1.0 says:</p>
+<p><strong>Cloud native technologies empower organizations to build and
+run scalable applications in modern, dynamic environments such as
+public, private, and hybrid clouds. Containers, service meshes,
+microservices, immutable infrastructure, and declarative APIs exemplify
+this approach.</strong></p>
+<p>These techniques enable loosely coupled systems that are resilient,
+manageable, and observable. Combined with robust automation, they allow
+engineers to make high-impact changes frequently and predictably with
+minimal toil.</p>
+<p>The Cloud Native Computing Foundation seeks to drive adoption of this
+paradigm by fostering and sustaining an ecosystem of open source,
+vendor-neutral projects. We democratize state-of-the-art patterns to
+make these innovations accessible for everyone.</p>
+</blockquote>
+<h4 id="云原生与12因素">1.2.3 云原生与12因素</h4>
+<p>2012年，Heroku提出12-Factors云应用设计理念。</p>
+<ol type="1">
+<li>Codebase：基准代码。用一个代码库做版本控制和多次部署。</li>
+<li>Dependencies：依赖。显式声明依赖关系，通过工具（Maven, Bundler,
+NPM等）隔离依赖，目的是不依赖于部署环境。</li>
+<li>Config：配置。通过操作系统级的环境变量将配置信息应用到各个部署环境。</li>
+<li>Backing services：后端服务。视后端服务为附加资源。</li>
+<li>Build, release, run：严格分离构建和运行。</li>
+<li>Process：进程。应用程序作为一个或多个无状态进程执行。任何持久化数据都存储于后端服务。</li>
+<li>Port
+binding：端口绑定。完全自我加载，不依赖网络服务器即可提供网络服务。通过监听端口来服务发来的请求。</li>
+<li>Concurrency：并发。通过进程模型进行扩展。水平向外扩展应用进程。</li>
+<li>Disposability：易处理。快速启动、优雅终止可最大化健壮性。包括，快速而有弹性的扩展、对变更的部署和宕机恢复能力。</li>
+<li>Dev/prod
+parity：开发环境与线上环境等价。尽可能保持开发、预发布和线上环境的相似，实现持续交付与部署。</li>
+<li>Logs：日志。视日志为事件流，通过集中式服务收集、聚合、检索和分析日志。</li>
+<li>Admin
+processes：管理进程。后台管理任务当作一次性进程执行，如：数据库迁移任务。</li>
+</ol>
+<p>核心思想：</p>
+<ol type="1">
+<li>使用声明式格式来搭建自动化。（学习成本低）</li>
+<li>和底层操作系统保持简洁的契约。（可移植性强）</li>
+<li>适合在现代的云平台上部署。（避免额外的管理需求）</li>
+<li>最小化开发与生产的分歧。（持续部署、灵活性强）</li>
+<li>在工具、架构和开发实践不产生重大变化的前提下实现扩展。</li>
+</ol>
+<h3 id="云原生的基础架构">1.3 云原生的基础架构</h3>
+<p>云原生应用利用微服务、服务网络、容器、DevOps和声明式API等代表性技术，来构建容错性好、易于管理和便于观察的松耦合系统。</p>
+<h4 id="微服务">1.3.1 微服务</h4>
+<p>将明确定义的功能分成更小的服务，服务之间是松耦合的，每个服务可以独立迭代。</p>
+<p>优点：降低系统复杂度、独立部署、独立扩展、跨语言编程。</p>
+<p>缺点：需要构建、测试、部署、运行数十个独立的服务，支持多种语言和环境，还引入了分布式系统的复杂性，如：网络延迟、容错性、消息序列化、不可靠网络、异步机制、版本化和差异化。</p>
+<h4 id="容器">1.3.2 容器</h4>
+<p>将微服务和所需的所有配置、依赖关系和环境变量打包成容器镜像，轻松移植到新的服务器节点。</p>
+<p>人力运维部署成本太大，在Docker基础之上，引入Kubernetes可以实现容器集群的自动化部署、自动扩缩容和维护等功能。</p>
+<p>Kubernetes不仅支持Docker，还支持Rocket等其他容器技术。</p>
+<h4 id="服务网络">1.3.3 服务网络</h4>
+<p>微服务技术架构有：</p>
+<ol type="1">
+<li>侵入式架构：服务框架嵌入程序代码，开发者组合各种组件（如：RPC、负载均衡、熔断等）。</li>
+<li>非侵入式架构：以代理的形式，与应用程序部署在一起，接管应用程序网络并对其透明，开发者只关心自身业务。</li>
+</ol>
+<p>服务网络（Service Mesh）对运行于其上的云原生应用是透明的。</p>
+<p>服务网格是处理服务间通信的基础设施层。它负责构成现代云原生应用程序的复杂服务拓扑来可靠地交付请求。在实践中，Service
+Mesh
+通常以轻量级网络代理阵列的形式实现，这些代理与应用程序代码部署在一起，对应用程序来说无需感知代理的存在。</p>
+<p>开源的服务网络软件：Istio、Linkerd、Envoy、Dubbo Mesh等。Service
+Mesh可以运行在Kubernetes上。</p>
+<h4 id="devops">1.3.4 DevOps</h4>
+<p>DevOps包含三个部分：</p>
+<ol type="1">
+<li>开发</li>
+<li>测试</li>
+<li>运维</li>
+</ol>
+<p>DevOps</p>
+<ol type="1">
+<li>Dev
+<ol type="1">
+<li>Plan</li>
+<li>Create</li>
+<li>Verify</li>
+<li>Package</li>
+</ol></li>
+<li>Ops
+<ol type="1">
+<li>Release</li>
+<li>Configure</li>
+<li>Monitor</li>
+</ol></li>
+</ol>
+<h3 id="小结">1.4 小结</h3>
+<p>云原生将云目标从节约IT成本转向推动业务增长。</p>
+<h2 id="微服务概述">2 微服务概述</h2>
+<h3 id="系统架构的演进">2.1 系统架构的演进</h3>
+<h4 id="单体架构">2.1.1 单体架构</h4>
+<p>巨石（Monolith）应用，易于测试、部署，但编译慢、局部改动就要重新部署、技术难扩展。</p>
+<h4 id="垂直分层架构">2.1.2 垂直分层架构</h4>
+<p>对单体架构垂直拆封，例如：用户界面层、业务逻辑层、数据访问层。</p>
+<h4 id="面向服务架构soaservice-oriented-architecture">2.1.3
+面向服务架构SOA(Service-Oriented Architecture)</h4>
+<p>每个服务登记到服务登记中心上。</p>
+<p>服务消费者从服务登记中心寻找，通过发送消息由企业服务总线（Enterprise
+Service Bus）转换后发送给相应的服务来调用服务。</p>
+<p>SOA是中心化架构，关注系统集成。</p>
+<h4 id="微服务架构">2.1.4 微服务架构</h4>
+<p>大型复杂软件有一个或多个微服务组成。微服务可独立部署、松耦合、仅关注完成单一职责。每个职责代表一个高内聚的业务能力。</p>
+<p>微服务是去中心化架构，关注分散管理、代码重用、快速扩展。</p>
+<p>微服务架构的特点：</p>
+<ol type="1">
+<li>系统服务曾分离为一个个的微服务。</li>
+<li>微服务遵循单一原则。</li>
+<li>微服务之间采用RESTful等轻量级协议通信。</li>
+<li>微服务采用容器技术部署，运行在自己的独立进程中。</li>
+<li>每个微服务都有独立的业务开发活动和周期。</li>
+</ol>
+<p>如果拆分的服务过多，服务治理成本会极大升高，开发调试成本高。服务之间相互依赖，还可能形成复杂依赖链，异常时出现雪崩效应。</p>
+<h4 id="云原生架构-1">2.1.5 云原生架构</h4>
+<p>代表技术：</p>
+<ol type="1">
+<li>容器</li>
+<li>服务网络</li>
+<li>微服务</li>
+<li>不可变基础设施</li>
+<li>声明式API</li>
+</ol>
+<p>四要素：</p>
+<ol type="1">
+<li>微服务</li>
+<li>容器化</li>
+<li>DevOps</li>
+<li>持续交付</li>
+</ol>
+<p>云原生架构依托PaaS产品：</p>
+<ol type="1">
+<li>Codeless：服务开发。</li>
+<li>Applicationless：服务发布。</li>
+<li>Serverless：服务运维。</li>
+</ol>
+<h3 id="常见的微服务框架">2.2 常见的微服务框架</h3>
+<h4 id="java中的spring-cloud与dubbo框架">2.2.1 Java中的Spring
+Cloud与Dubbo框架</h4>
+<p>Spring Cloud将各家公司开发的比较成熟的服务框架组合起来，通过SprIng
+Boot风格再封装，屏蔽复杂配置和实现原理，对外提供简单易懂的工具包。</p>
+<p>Dubbo框架是分布式服务框架，提供RPC方案和SOA服务治理方案，特点主要在：远程通信、集群容错、自动发现。</p>
+<h4 id="go语言中的go-kit与go-micro框架">2.2.2 Go语言中的Go Kit与Go
+Micro框架</h4>
+<p>Go-kit（gokit.io）是Go语言工具包的集合。</p>
+<p>Go-kit不仅是微服务工具包，也非常适合构建优雅的架构设计。</p>
+<p>Go-kit应用程序架构：</p>
+<ol type="1">
+<li>传输层：网络通信，HTTP、gRPC等，或NATS发布订阅系统。</li>
+<li>接口层：服务对外提供的接口方法定义为端点（Endpoint），端点使用传输层的通信对外提供服务。</li>
+<li>服务层：业务逻辑，不考虑传输、编解码。</li>
+</ol>
+<p>Go Micro是Go语言实现的插件化RPC微服务框架，包含组件：</p>
+<ol type="1">
+<li>Registry：服务发现，解析服务名字到服务地址。</li>
+<li>Selector：基于Registry的负载均衡组件。</li>
+<li>Broker：发布和订阅组件。服务之间基于消息中间件的异步通信。</li>
+<li>Transport：服务之间的同步通信。</li>
+<li>Codec：服务之间的消息编解码组件。</li>
+<li>Server：服务主体。</li>
+<li>Client：提供访问微服务的客户端。</li>
+</ol>
+<h3 id="微服务设计的六大原则">2.3 微服务设计的六大原则</h3>
+<ol type="1">
+<li>高内聚低耦合</li>
+<li>高度自治</li>
+<li>以业务为中心</li>
+<li>弹性设计</li>
+<li>日志与监控</li>
+<li>自动化</li>
+</ol>
+<h3 id="领域驱动设计">2.4 领域驱动设计</h3>
+<p>Domain Driven Design</p>
+<p>分为4层：</p>
+<ol type="1">
+<li>Interface</li>
+<li>Application</li>
+<li>Domain</li>
+<li>Infrastructure</li>
+</ol>
+<p>业务系统</p>
+<ul>
+<li>核心域（Core Domain）：如，秒杀操作。</li>
+<li>子域
+<ul>
+<li>支撑子域（Generic
+Subdomain）：如，活动管理领域（创建秒杀、查询秒杀）。</li>
+<li>通用子域（Common Subdomain）：如，用户鉴权领域。</li>
+</ul></li>
+</ul>
+<p>限界上下文和子域一一对应，一个限界上下文只使用一套通用语言，并保证其清晰简洁。</p>
+<p>实际情况中，根据业务，有时将多个界限上下文合并。</p>
+<p>随着微服务架构流行，组织内部产生许多小规模团队。组织架构从层级职能组织变成扁平的小团队集群。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>支持我的写作！(Support my writing!)</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="Heary 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/alipay.jpg" alt="Heary 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/paypal.png" alt="Heary PayPal">
+        <span>PayPal</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Heary
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://heary.cn/posts/%E4%BA%91%E5%8E%9F%E7%94%9F%E4%B8%8E%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/" title="云原生与微服务概念笔记">https://heary.cn/posts/云原生与微服务概念笔记/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Cloud/" rel="tag"><i class="fa fa-tag"></i> Cloud</a>
+              <a href="/tags/Cloud-Native/" rel="tag"><i class="fa fa-tag"></i> Cloud Native</a>
+              <a href="/tags/Microservices/" rel="tag"><i class="fa fa-tag"></i> Microservices</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/%E3%80%8A%E8%BF%9C%E8%A7%81%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" rel="prev" title="《远见》读书笔记">
+                  <i class="fa fa-chevron-left"></i> 《远见》读书笔记
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/IPython%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E8%A1%A5%E5%85%A8%E4%B8%94%E5%9B%A0jedi%E6%8A%A5TypeError%E8%80%8C%E9%80%80%E5%87%BA%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" rel="next" title="IPython无法自动补全且因jedi报TypeError而退出问题解决">
+                  IPython无法自动补全且因jedi报TypeError而退出问题解决 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Heary</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">693k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">10:30</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"HearyShen","repo":"gitalk-comments","client_id":"77d476596d65dea261b8","client_secret":"225837e23b2eb099dc77a3aa38dbeefffef4599b","admin_user":"HearyShen","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"0a6ef3c54c4518828f9e9eca5cadc448"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
