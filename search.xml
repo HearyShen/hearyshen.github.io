@@ -16,9 +16,9 @@
             
             <tag> Troubleshooting </tag>
             
-            <tag> Linux </tag>
-            
             <tag> CentOS </tag>
+            
+            <tag> Linux </tag>
             
             <tag> yum </tag>
             
@@ -710,9 +710,9 @@
       
         <tags>
             
-            <tag> troubleshooting </tag>
-            
             <tag> GitHub </tag>
+            
+            <tag> troubleshooting </tag>
             
             <tag> Cybersecurity </tag>
             
@@ -1095,11 +1095,11 @@
             
             <tag> Troubleshooting </tag>
             
-            <tag> Flask </tag>
-            
             <tag> PyTorch </tag>
             
             <tag> CUDA </tag>
+            
+            <tag> Flask </tag>
             
         </tags>
       
@@ -1434,11 +1434,11 @@
             
             <tag> Linux </tag>
             
+            <tag> Tools </tag>
+            
             <tag> WSL </tag>
             
             <tag> Windows </tag>
-            
-            <tag> Tools </tag>
             
         </tags>
       
@@ -1503,11 +1503,11 @@
             
             <tag> Python </tag>
             
+            <tag> PyTorch </tag>
+            
             <tag> Flask </tag>
             
             <tag> API </tag>
-            
-            <tag> PyTorch </tag>
             
             <tag> REST </tag>
             
@@ -2640,9 +2640,9 @@
       
         <tags>
             
-            <tag> Tools </tag>
-            
             <tag> Visual Studio </tag>
+            
+            <tag> Tools </tag>
             
         </tags>
       
@@ -2971,11 +2971,11 @@
             
             <tag> Deploy </tag>
             
-            <tag> Linux </tag>
+            <tag> LNMP </tag>
             
             <tag> CentOS </tag>
             
-            <tag> LNMP </tag>
+            <tag> Linux </tag>
             
         </tags>
       
